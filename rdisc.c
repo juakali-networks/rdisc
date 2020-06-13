@@ -4,11 +4,13 @@
  * Peter.Wanawunga@gmail.com
 */
 
+
 #include <uapi/linux/icmp.h>
 #include <uapi/linux/in.h>
 #include <uapi/linux/if.h>
+#include <asm/checksum.h> 
 
-
+#include "rdisc.h"
 
 /*
  * 			S O L I C I T O R
@@ -23,7 +25,7 @@ solicitor(struct sockaddr_in *sin)
 	struct icmphdr *icmph;
 	int packetlen;
 
-	printK("Sending solicitations to %s\n", sin->sin_addr);
+	printk("Sending solicitations to %s\n", sin->sin_addr);
 	icmph->type = ICMP_ROUTERSOLICIT;
 	icmph->code = 0;
 	icmph->checksum = 0;
@@ -31,7 +33,9 @@ solicitor(struct sockaddr_in *sin)
 	packetlen = 8;
 
 	/* Compute ICMP checksum here */
-	icmphr->checksum = ip_fast_checksum( (unsigned short *)icp, packetlen );
+        icmph->checksum = ip_fast_csum( (unsigned short *)icmph, packetlen);
+
+	/* i = sendmcast(socketfd, (char *)outpack, packetlen, sin);*/
 
 	
 }
