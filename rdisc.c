@@ -2,7 +2,6 @@
  * Rdisc for Ubuntu
  * Peter Wanawunga
  * Peter.Wanawunga@gmail.com
-test
 */
 
 
