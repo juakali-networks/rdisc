@@ -4,7 +4,9 @@
  * Peter.Wanawunga@gmail.com
 */
 
-
+#include <uapi/linux/icmp.h>
+#include <uapi/linux/in.h>
+#include <uapi/linux/if.h>
 
 
 
@@ -18,14 +20,14 @@ void
 solicitor(struct sockaddr_in *sin)
 {
 	static unsigned char outpack[MAXPACKET];
-	struct icmphdr *icp = (struct icmphdr *) ALLIGN(outpack);
+	struct icmphdr *icmph;
 	int packetlen;
 
 	printK("Sending solicitations to %s\n", sin->sin_addr);
-	icp->type = ICMP_ROUTERSOLICIT;
-	icp->code = 0;
-	icp->checksum = 0;
-	icp->un.gateway = 0; /* Reserved */
+	icmph->type = ICMP_ROUTERSOLICIT;
+	icmph->code = 0;
+	icmph->checksum = 0;
+	icmph->un.gateway = 0; /* Reserved */
 	packetlen = 8;
 
 	/* Compute ICMP checksum here */
