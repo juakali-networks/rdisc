@@ -23,9 +23,9 @@ solicitor(struct sockaddr_in *sin)
 {
 	static unsigned char outpack[MAXPACKET];
 	struct icmphdr *icmph;
-	int packetlen;
+	int packetlen, i;
 
-	printk("Sending solicitations to %s\n", sin->sin_addr);
+	printk(KERN_INFO "Sending solicitations to %p\n", sin->sin_addr);
 	icmph->type = ICMP_ROUTERSOLICIT;
 	icmph->code = 0;
 	icmph->checksum = 0;
@@ -35,7 +35,43 @@ solicitor(struct sockaddr_in *sin)
 	/* Compute ICMP checksum here */
         icmph->checksum = ip_fast_csum( (unsigned short *)icmph, packetlen);
 
-	/* i = sendmcast(socketfd, (char *)outpack, packetlen, sin);*/
+	i = sendmcast(socketfd, (char *)outpack, packetlen, sin);
 
+	if( i < 0 || i != packetlen )  {
+		if( i<0 ) {
+		    printk(KERN_WARNING "solicitor:sendto");
+		}
+		/*printk("wrote %s %d chars, ret=%d\n", sendaddress, packetlen, i );*/
+	}
 	
 }
+
+int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
+{
+	int i, cc;
+
+	for (i = 0; i < num_interfaces; i++) {
+		if ((interfaces[i].flags & (IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST)) == 0)
+			continue;
+		cc = sendmcastif(socket, packet, packetlen, sin, &interfaces[i]);
+		if (cc!= packetlen) {
+			return (cc);
+		}
+	}
+	return (packetlen);
+}
+
+int
+sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin,
+	    struct interface *ifp)
+{
+
+	struct ip_mreqn mreqn;
+
+	memset(&mreqn, 0, sizeof(mreqn));
+	mreqn.imr_ifindex = ifp->ifindex;
+	mreqn.imr_address = ifp->localaddr;
+}
+
+
+
