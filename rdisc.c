@@ -4,12 +4,12 @@
  * Peter.Wanawunga@gmail.com
 */
 
-
+#include <linux/inet.h>
 #include <uapi/linux/icmp.h>
 #include <uapi/linux/in.h>
 #include <uapi/linux/if.h>
 #include <asm/checksum.h> 
-
+#include <net/sock.h>
 #include "rdisc.h"
 
 /*
@@ -71,7 +71,17 @@ sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin,
 	memset(&mreqn, 0, sizeof(mreqn));
 	mreqn.imr_ifindex = ifp->ifindex;
 	mreqn.imr_address = ifp->localaddr;
+	printk(KERN_DEBUG, "Multicast to interface %s, %p\n",
+			 ifp->name, mreqn.imr_address);
+	if (ip_setsockopt(socket, IPPROTO_IP, IP_MULTICAST_IF,
+		       (char *)&mreqn,
+		       sizeof(mreqn)) < 0) {
+				printk(KERN_ERR, "ip_setsockopt (IP_MULTICAST_IF): 
+						Cannot send multicast packet over interface %s, %p\n",
+		       ifp->name, mreqn.imr_address);
+		return (-1);
 }
+
 
 
 
