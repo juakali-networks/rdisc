@@ -79,18 +79,17 @@ int sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin
 	memset(&mreqn, 0, sizeof(mreqn));
 	mreqn.imr_ifindex = ifp->ifindex;
 	mreqn.imr_address = ifp->localaddr;
-	printf("Multicast to interface %s, %p\n", ifp->name, mreqn.imr_address);
+	printf("Multicast to interface %s, %s\n", ifp->name, pr_name(mreqn.imr_address));
 
-/*	if (setsockopt(socket, IPPROTO_IP, IP_MULTICAST_IF,
+	if (setsockopt(socket, IPPROTO_IP, IP_MULTICAST_IF,
 		       (char *)&mreqn,
 		       sizeof(mreqn)) < 0) {
-				printf(ip_setsockopt (IP_MULTICAST_IF): 
-						Cannot send multicast packet over interface %s, %p\n,
-		       ifp->name, mreqn.imr_address);*/
+				printf("setsockopt (IP_MULTICAST_IF): Cannot send multicast packet over interface %s, %s\n", ifp->name, pr_name(mreqn.imr_address));
 		return (-1);
+
+	}
+
 }
-
-
 
 
 
