@@ -8,16 +8,15 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/ip_icmp.h>
+#include <net/if.h>
 /*  <linux/inet.h> 
 #include <uapi/linux/icmp.h>
-#include <uapi/linux/in.h>
-#include <uapi/linux/if.h>
 #include <asm/checksum.h> 
 #include <net/sock.h> */
 #include "rdisc.h"
 
 int main() {
-	/* solicitor();*/
+    /* solicitor();*/
 	/*test*/
    return (0);
 }
@@ -44,17 +43,17 @@ solicitor(struct sockaddr_in *sin)
 	/* Compute ICMP checksum here */
         icmph->checksum = in_cksum((unsigned short *)icmph, packetlen);
 
-	/*i = sendmcast(socketfd, (char *)outpack, packetlen, sin);*/
+	i = sendmcast(socketfd, (char *)outpack, packetlen, sin);
 
 	if( i < 0 || i != packetlen )  {
-		/*if( i<0 ) {
+		if( i<0 ) {
 		    printf("solicitor:sendto");
 		}
-		printk("wrote %s %d chars, ret=%d\n", sendaddress, packetlen, i );*/
+		/*printk("wrote %s %d chars, ret=%d\n", sendaddress, packetlen, i );*/
 	}
 	
 }
-/*
+
 int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
 {
 	int i, cc;
@@ -62,7 +61,7 @@ int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
 	for (i = 0; i < num_interfaces; i++) {
 		if ((interfaces[i].flags & (IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST)) == 0)
 			continue;
-		cc = sendmcastif(socket, packet, packetlen, sin, &interfaces[i]);
+	       cc = sendmcastif(socket, packet, packetlen, sin, &interfaces[i]);
 		if (cc!= packetlen) {
 			return (cc);
 		}
@@ -70,8 +69,8 @@ int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
 	return (packetlen);
 }
 
-int
-sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin,
+
+int sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin,
 	    struct interface *ifp)
 {
 
@@ -80,20 +79,20 @@ sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin,
 	memset(&mreqn, 0, sizeof(mreqn));
 	mreqn.imr_ifindex = ifp->ifindex;
 	mreqn.imr_address = ifp->localaddr;
-	printk(KERN_DEBUG, "Multicast to interface %s, %p\n",
-			 ifp->name, mreqn.imr_address);
-	if (setsockopt(socket, IPPROTO_IP, IP_MULTICAST_IF,
+	printf("Multicast to interface %s, %p\n", ifp->name, mreqn.imr_address);
+
+/*	if (setsockopt(socket, IPPROTO_IP, IP_MULTICAST_IF,
 		       (char *)&mreqn,
 		       sizeof(mreqn)) < 0) {
-				printf("ip_setsockopt (IP_MULTICAST_IF): 
-						Cannot send multicast packet over interface %s, %p\n",
-		       ifp->name, mreqn.imr_address);
+				printf(ip_setsockopt (IP_MULTICAST_IF): 
+						Cannot send multicast packet over interface %s, %p\n,
+		       ifp->name, mreqn.imr_address);*/
 		return (-1);
 }
 
 
 
-*/
+
 
 /*
  *			P R _ N A M E
