@@ -15,6 +15,7 @@
 
 static void solicitor(struct sockaddr_in *sin);
 static char *pr_name(struct in_addr addr);
+static unsigned short in_cksum(unsigned short *addr, int len);
 
 /* Statics 
 static int num_interfaces;

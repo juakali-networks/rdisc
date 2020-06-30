@@ -5,7 +5,7 @@ CFLAGS=-I$(IDIR)
 ODIR=obj
 LDIR =../lib
 
-LIBS=-lm
+# LIBS=-lm
 
 _DEPS = rdisc.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
@@ -19,6 +19,8 @@ $(ODIR)/%.o: %.c $(DEPS)
 
 rdisc: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+#       $(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+
 
 .PHONY: clean
 
