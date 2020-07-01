@@ -4,12 +4,15 @@
  * Peter.Wanawunga@gmail.com
 */
 #include <stdio.h>
+#include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/ip_icmp.h>
 #include <net/if.h>
-/*  <linux/inet.h> 
+/* #include <asm-generic/socket.h>
+#include <asm-generic/types.h>
+
 #include <uapi/linux/icmp.h>
 #include <asm/checksum.h> 
 #include <net/sock.h> */
@@ -18,6 +21,8 @@
 int main() {
     /* solicitor();*/
 	/*test*/
+	printf("Testing the main function...\n");
+
    return (0);
 }
 /*
@@ -72,8 +77,8 @@ int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
 
 int sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin,
 	    struct interface *ifp)
-{
-
+	{
+	int cc;
 	struct ip_mreqn mreqn;
 
 	memset(&mreqn, 0, sizeof(mreqn));
@@ -88,7 +93,13 @@ int sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin
 		return (-1);
 
 	}
-
+	cc = sendto(socket, packet, packetlen, 0,
+		    (struct sockaddr *)sin, sizeof (struct sockaddr));
+	if (cc!= packetlen) {
+		printf("sendmcast: Cannot send multicast packet over interface %s, %s\n",
+		       ifp->name, pr_name(mreqn.imr_address));
+	}
+	return (cc);
 }
 
 
