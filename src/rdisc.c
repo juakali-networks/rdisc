@@ -5,8 +5,10 @@
 */
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+#include <syslog.h>
+#include <signal.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/ip_icmp.h>
 #include <net/if.h>
@@ -18,12 +20,218 @@
 #include <net/sock.h> */
 #include "rdisc.h"
 
-int main() {
-    /* solicitor();*/
+/*
+ * 			M A I N
+ */
+char    *sendaddress, *recvaddress;
+
+
+int main(int argc, char **argv) 
+{
+
+    	/* solicitor();*/
 	/*test*/
 	printf("Testing the main function...\n");
 
-   return (0);
+	struct sockaddr_in from = { 0 };
+	char **av = argv;
+	struct sockaddr_in *to = &whereto;
+	struct sockaddr_in joinaddr;
+	sigset_t sset, sset_empty;
+#ifdef RDISC_SERVER
+	int val;
+
+	atexit(close_stdout);
+	min_adv_int =( max_adv_int * 3 / 4);
+	lifetime = (3*max_adv_int);
+#endif
+
+	argc--, av++;
+	while (argc > 0 && *av[0] == '-') {
+		while (*++av[0]) {
+			switch (*av[0]) {
+			case 'd':
+				debug = 1;
+				break;
+			case 't':
+				trace = 1;
+				break;
+			case 'v':
+				verbose++;
+				break;
+			case 's':
+				solicit = 1;
+				break;
+#ifdef RDISC_SERVER
+			case 'r':
+				responder = 1;
+				break;
+#endif
+			case 'a':
+				best_preference = 0;
+				break;
+			case 'b':
+				best_preference = 1;
+				break;
+			case 'f':
+				forever = 1;
+				break;
+			case 'V':
+				printf(IPUTILS_VERSION("rdisc"));
+				printf("Compiled %s ENABLE_RDISC_SERVER.\n",
+#ifdef RDISC_SERVER
+						"with"
+#else
+						"without"
+#endif
+				);
+				exit(0);
+#ifdef RDISC_SERVER
+			case 'T':
+				argc--, av++;
+				if (argc != 0) {
+					val = strtol(av[0], (char **)NULL, 0);
+					if (val < 4 || val > 1800)
+						error(1, 0, "Bad Max Advertisement Interval: %d",
+							     val);
+					max_adv_int = val;
+					min_adv_int =( max_adv_int * 3 / 4);
+					lifetime = (3*max_adv_int);
+				} else {
+					prusage();
+					/* NOTREACHED*/
+				}
+				goto next;
+			case 'p':
+				argc--, av++;
+				if (argc != 0) {
+					val = strtol(av[0], (char **)NULL, 0);
+					preference = val;
+				} else {
+					prusage();
+					/* NOTREACHED*/
+				}
+				goto next;
+#endif
+			default:
+				prusage();
+				/* NOTREACHED*/
+			}
+		}
+#ifdef RDISC_SERVER
+next:
+#endif
+		argc--, av++;
+	}
+	if( argc < 1)  {
+		if (support_multicast()) {
+			sendaddress = ALL_ROUTERS_ADDRESS;
+#ifdef RDISC_SERVER
+			if (responder)
+				sendaddress = ALL_HOSTS_ADDRESS;
+#endif
+		} else
+			sendaddress = "255.255.255.255";
+	} else {
+		sendaddress = av[0];
+		argc--;
+	}
+
+	if (argc < 1) {
+		if (support_multicast()) {
+			recvaddress = ALL_HOSTS_ADDRESS;
+#ifdef RDISC_SERVER
+			if (responder)
+				recvaddress = ALL_ROUTERS_ADDRESS;
+#endif
+		} else
+			recvaddress = "255.255.255.255";
+	} else {
+		recvaddress = av[0];
+		argc--;
+	}
+	if (argc != 0) {
+		error(0, 0, "Extra parameters");
+		prusage();
+		/* NOTREACHED */
+	}
+
+#ifdef RDISC_SERVER
+	if (solicit && responder) {
+		prusage();
+		/* NOTREACHED */
+	}
+#endif
+
+	if (!(solicit && !forever)) {
+		do_fork();
+/*
+ * Added the next line to stop forking a second time
+ * Fraser Gardiner - Sun Microsystems Australia
+ */
+		forever = 1;
+	}
+
+	memset( (char *)&whereto, 0, sizeof(struct sockaddr_in) );
+	to->sin_family = AF_INET;
+	to->sin_addr.s_addr = inet_addr(sendaddress);
+
+	memset( (char *)&joinaddr, 0, sizeof(struct sockaddr_in) );
+	joinaddr.sin_family = AF_INET;
+	joinaddr.sin_addr.s_addr = inet_addr(recvaddress);
+
+#ifdef RDISC_SERVER
+	if (responder)
+		iputils_srand();
+#endif
+
+	if ((socketfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
+		logperror("socket");
+		exit(5);
+	}
+
+	setlinebuf( stdout );
+
+	signal_setup(SIGINT, finish );
+	signal_setup(SIGTERM, graceful_finish );
+	signal_setup(SIGHUP, initifs );
+	signal_setup(SIGALRM, timer );
+
+	sigemptyset(&sset);
+	sigemptyset(&sset_empty);
+	sigaddset(&sset, SIGALRM);
+	sigaddset(&sset, SIGHUP);
+	sigaddset(&sset, SIGTERM);
+	sigaddset(&sset, SIGINT);
+
+	init();
+	if (join(socketfd, &joinaddr) < 0) {
+		logmsg(LOG_ERR, "Failed joining addresses\n");
+		exit (2);
+	}
+
+	timer();	/* start things going */
+
+	for (;;) {
+		unsigned char	packet[MAXPACKET];
+		int len = sizeof (packet);
+		socklen_t fromlen = sizeof (from);
+		int cc;
+
+		cc=recvfrom(socketfd, (char *)packet, len, 0,
+			    (struct sockaddr *)&from, &fromlen);
+		if (cc<0) {
+			if (errno == EINTR)
+				continue;
+			logperror("recvfrom");
+			continue;
+		}
+
+		sigprocmask(SIG_SETMASK, &sset, NULL);
+		pr_pack( (char *)packet, cc, &from );
+		sigprocmask(SIG_SETMASK, &sset_empty, NULL);
+	}
+	/*NOTREACHED*/
 }
 /*
  * 			S O L I C I T O R
