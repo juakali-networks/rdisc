@@ -62,10 +62,15 @@ int best_preference = 1;  	/* Set to record only the router(s) with the
 				   best preference in the kernel. Not set
 				   puts all routes in the kernel. */
 
+#define TIMER_INTERVAL 	3
+#define GETIFCONF_TIMER	30
+
 struct sockaddr_in whereto;/* Address to send to */
 
 static void solicitor(struct sockaddr_in *sin);
+static void prusage(void);
 static char *pr_name(struct in_addr addr);
+static void pr_pack(char *buf, int cc, struct sockaddr_in *from);
 static unsigned short in_cksum(unsigned short *addr, int len);
 
 static void init(void);
@@ -73,6 +78,8 @@ static void graceful_finish(void);
 static void finish(void);
 static void timer(void);
 static void initifs(void);
+
+static int left_until_advertise;
 
 /* Statics */
 static int num_interfaces;

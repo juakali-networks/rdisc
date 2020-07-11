@@ -187,6 +187,7 @@ struct ttysize {
 #define	OSIOCGIFNETMASK	_IOWR('i',21, struct ifreq)	/* get net addr mask */
 #define	SIOCGIFNETMASK	_IOWR('i',37, struct ifreq)	/* get net addr mask */
 #define	SIOCSIFNETMASK	_IOW('i',22, struct ifreq)	/* set net addr mask */
+#define SIOCGIFINDEX    _IOWR('i',39, struct ifreq)   /* get IF index */
 #define	SIOCGIFMETRIC	_IOWR('i',23, struct ifreq)	/* get IF metric */
 #define	SIOCSIFMETRIC	_IOW('i',24, struct ifreq)	/* set IF metric */
 #define	SIOCDIFADDR	_IOW('i',25, struct ifreq)	/* delete IF addr */

@@ -507,3 +507,332 @@ initifs()
 	(void) close(sock);
 	(void) free(buf);
 }
+
+void signal_setup(int signo, void (*handler)(void))
+{
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(sa));
+
+	sa.sa_handler = (void (*)(int))handler;
+	sigaction(signo, &sa, NULL);
+}
+
+void timer()
+{
+	static int time;
+	static int left_until_getifconf;
+	static int left_until_solicit;
+
+
+	time += TIMER_INTERVAL;
+
+	left_until_getifconf -= TIMER_INTERVAL;
+	left_until_advertise -= TIMER_INTERVAL;
+	left_until_solicit -= TIMER_INTERVAL;
+
+	if (left_until_getifconf < 0) {
+		initifs();
+		left_until_getifconf = GETIFCONF_TIMER;
+	}
+#ifdef RDISC_SERVER
+	if (responder && left_until_advertise <= 0) {
+		ntransmitted++;
+		advertise(&whereto, lifetime);
+		if (ntransmitted < initial_advertisements)
+			left_until_advertise = initial_advert_interval;
+		else
+			left_until_advertise = min_adv_int +
+				((max_adv_int - min_adv_int) *
+				 (rand() % 1000)/1000);
+	} else
+#endif
+	if (solicit && left_until_solicit <= 0) {
+		ntransmitted++;
+		solicitor(&whereto);
+		if (ntransmitted < max_solicitations)
+			left_until_solicit = solicitation_interval;
+		else {
+			solicit = 0;
+			if (!forever && nreceived == 0)
+				exit(5);
+		}
+	}
+	age_table(TIMER_INTERVAL);
+	alarm(TIMER_INTERVAL);
+}
+
+void do_fork(void)
+{
+	if (trace)
+		return;
+	if (daemon(0, 0) < 0)
+		error(1, errno, "failed to daemon()");
+	initlog();
+}
+
+
+void
+graceful_finish()
+{
+	discard_table();
+	finish();
+	exit(0);
+}
+
+void prusage(void)
+{
+	fprintf(stderr,
+		"\nUsage\n"
+		"  rdisc [options] <send address> <receive address>\n"
+		"\nOptions:\n"
+		"  -a               accept all routers\n"
+		"  -b               accept best only (default)\n"
+		"  -d               enable debug syslog messages\n"
+		"  -f               run forever\n"
+#ifdef RDISC_SERVER
+		"  -r               responder mode\n"
+#endif
+		"  -s               send solicitation messages at startup\n"
+#ifdef RDISC_SERVER
+		"  -p <preference>  set <preference> in advertisement\n"
+		"  -T <seconds>     set max advertisement interval in <seconds>\n"
+#endif
+		"  -t               test mode, do not go background\n"
+		"  -v               verbose mode\n"
+		"  -V               print version and exit\n"
+		"\nFor more details see rdisc(8).\n"
+	);
+	exit(1);
+}
+
+
+/*
+ *			P R _ P A C K
+ *
+ * Print out the packet, if it came from us.  This logic is necessary
+ * because ALL readers of the ICMP socket get a copy of ALL ICMP packets
+ * which arrive ('tis only fair).  This permits multiple copies of this
+ * program to be run without having intermingled output (or statistics!).
+ */
+void
+pr_pack(char *buf, int cc, struct sockaddr_in *from)
+{
+	struct iphdr *ip;
+	struct icmphdr *icp;
+	int i;
+	int hlen;
+
+	ip = (struct iphdr *) ALLIGN(buf);
+	hlen = ip->ihl << 2;
+	if (cc < hlen + 8) {
+		if (verbose)
+			logmsg(LOG_INFO, "packet too short (%d bytes) from %s\n", cc,
+				 pr_name(from->sin_addr));
+		return;
+	}
+	cc -= hlen;
+	icp = (struct icmphdr *)ALLIGN(buf + hlen);
+
+	switch (icp->type) {
+	case ICMP_ROUTERADVERT:
+	{
+		struct icmp_ra *rap = (struct icmp_ra *)ALLIGN(icp);
+		struct icmp_ra_addr *ap;
+
+#ifdef RDISC_SERVER
+		if (responder)
+			break;
+#endif
+
+		/* TBD verify that the link is multicast or broadcast */
+		/* XXX Find out the link it came in over? */
+		if (in_cksum((unsigned short *)ALLIGN(buf+hlen), cc)) {
+			if (verbose)
+				logmsg(LOG_INFO, "ICMP %s from %s: Bad checksum\n",
+					 pr_type((int)rap->icmp_type),
+					 pr_name(from->sin_addr));
+			return;
+		}
+		if (rap->icmp_code != 0) {
+			if (verbose)
+				logmsg(LOG_INFO, "ICMP %s from %s: Code = %d\n",
+					 pr_type((int)rap->icmp_type),
+					 pr_name(from->sin_addr),
+					 rap->icmp_code);
+			return;
+		}
+		if (rap->icmp_num_addrs < 1) {
+			if (verbose)
+				logmsg(LOG_INFO, "ICMP %s from %s: No addresses\n",
+					 pr_type((int)rap->icmp_type),
+					 pr_name(from->sin_addr));
+			return;
+		}
+		if (rap->icmp_wpa < 2) {
+			if (verbose)
+				logmsg(LOG_INFO, "ICMP %s from %s: Words/addr = %d\n",
+					 pr_type((int)rap->icmp_type),
+					 pr_name(from->sin_addr),
+					 rap->icmp_wpa);
+			return;
+		}
+		if (cc <
+		    8 + rap->icmp_num_addrs * rap->icmp_wpa * 4) {
+			if (verbose)
+				logmsg(LOG_INFO, "ICMP %s from %s: Too short %d, %d\n",
+					      pr_type((int)rap->icmp_type),
+					      pr_name(from->sin_addr),
+					      cc,
+					      8 + rap->icmp_num_addrs * rap->icmp_wpa * 4);
+			return;
+		}
+
+		if (verbose)
+			logmsg(LOG_INFO, "ICMP %s from %s, lifetime %d\n",
+				      pr_type((int)rap->icmp_type),
+				      pr_name(from->sin_addr),
+				      ntohs(rap->icmp_lifetime));
+
+		/* Check that at least one router address is a neighbour
+		 * on the arriving link.
+		 */
+		for (i = 0; (unsigned)i < rap->icmp_num_addrs; i++) {
+			struct in_addr ina;
+			ap = (struct icmp_ra_addr *)
+				ALLIGN(buf + hlen + 8 +
+				       i * rap->icmp_wpa * 4);
+			ina.s_addr = ap->ira_addr;
+			if (verbose)
+				logmsg(LOG_INFO, "\taddress %s, preference 0x%x\n",
+					      pr_name(ina),
+					      (unsigned int)ntohl(ap->ira_preference));
+			if (is_directly_connected(ina))
+				record_router(ina,
+					      ntohl(ap->ira_preference),
+					      ntohs(rap->icmp_lifetime));
+		}
+		nreceived++;
+		if (!forever) {
+			do_fork();
+			forever = 1;
+/*
+ * The next line was added so that the alarm is set for the new procces
+ * Fraser Gardiner Sun Microsystems Australia
+ */
+			(void) alarm(TIMER_INTERVAL);
+		}
+		break;
+	}
+
+#ifdef RDISC_SERVER
+	case ICMP_ROUTERSOLICIT:
+	{
+		struct sockaddr_in sin;
+
+		if (!responder)
+			break;
+
+		/* TBD verify that the link is multicast or broadcast */
+		/* XXX Find out the link it came in over? */
+
+		if (in_cksum((unsigned short *)ALLIGN(buf+hlen), cc)) {
+			if (verbose)
+				logmsg(LOG_INFO, "ICMP %s from %s: Bad checksum\n",
+					      pr_type((int)icp->type),
+					      pr_name(from->sin_addr));
+			return;
+		}
+		if (icp->code != 0) {
+			if (verbose)
+				logmsg(LOG_INFO, "ICMP %s from %s: Code = %d\n",
+					      pr_type((int)icp->type),
+					      pr_name(from->sin_addr),
+					      icp->code);
+			return;
+		}
+
+		if (cc < ICMP_MINLEN) {
+			if (verbose)
+				logmsg(LOG_INFO, "ICMP %s from %s: Too short %d, %d\n",
+					      pr_type((int)icp->type),
+					      pr_name(from->sin_addr),
+					      cc,
+					      ICMP_MINLEN);
+			return;
+		}
+
+		if (verbose)
+			logmsg(LOG_INFO, "ICMP %s from %s\n",
+				      pr_type((int)icp->type),
+				      pr_name(from->sin_addr));
+
+		/* Check that ip_src is either a neighbour
+		 * on the arriving link or 0.
+		 */
+		sin.sin_family = AF_INET;
+		if (ip->saddr == 0) {
+			/* If it was sent to the broadcast address we respond
+			 * to the broadcast address.
+			 */
+			if (IN_CLASSD(ntohl(ip->daddr)))
+				sin.sin_addr.s_addr = htonl(0xe0000001);
+			else
+				sin.sin_addr.s_addr = INADDR_BROADCAST;
+			/* Restart the timer when we broadcast */
+			left_until_advertise = min_adv_int +
+				((max_adv_int - min_adv_int)
+				 * (rand() % 1000)/1000);
+		} else {
+			sin.sin_addr.s_addr = ip->saddr;
+			if (!is_directly_connected(sin.sin_addr)) {
+				if (verbose)
+					logmsg(LOG_INFO, "ICMP %s from %s: source not directly connected\n",
+						      pr_type((int)icp->type),
+						      pr_name(from->sin_addr));
+				break;
+			}
+		}
+		nreceived++;
+		ntransmitted++;
+		advertise(&sin, lifetime);
+		break;
+	}
+#endif
+	}
+}
+
+/*
+ *                      F I N I S H
+ *
+ * Print out statistics, and give up.
+ * Heavily buffered STDIO is used here, so that all the statistics
+ * will be written with 1 sys-write call.  This is nice when more
+ * than one copy of the program is running on a terminal;  it prevents
+ * the statistics output from becoming intermingled.
+ */
+void
+finish()
+{
+#ifdef RDISC_SERVER
+        if (responder) {
+                /* Send out a packet with a preference so that all
+                 * hosts will know that we are dead.
+                 *
+                 * Wrong comment, wrong code.
+                 *      ttl must be set to 0 instead. --ANK
+                 */
+                logmsg(LOG_ERR, "terminated\n");
+                ntransmitted++;
+                advertise(&whereto, 0);
+        }
+#endif
+        logmsg(LOG_INFO, "\n----%s rdisc Statistics----\n"
+                         "%d packets transmitted, "
+                         "%d packets received, \n",
+                         sendaddress, ntransmitted, nreceived);
+        (void) fflush(stdout);
+        exit(0);
+}
+
+
