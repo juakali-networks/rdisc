@@ -5,6 +5,8 @@
 */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <malloc.h>
 #include <errno.h>
 #include <syslog.h>
 #include <signal.h>
@@ -12,6 +14,8 @@
 #include <netdb.h>
 #include <netinet/ip_icmp.h>
 #include <net/if.h>
+
+
 /* #include <asm-generic/socket.h>
 #include <asm-generic/types.h>
 
@@ -19,6 +23,7 @@
 #include <asm/checksum.h> 
 #include <net/sock.h> */
 #include "rdisc.h"
+#include "ioctl.h"
 
 /*
  * 			M A I N
@@ -373,3 +378,132 @@ unsigned short in_cksum(unsigned short *addr, int len)
 	return (answer);
 }
 
+void
+init()
+{
+	initifs();
+#ifdef RDISC_SERVER
+	{
+		int i;
+		for (i = 0; i < interfaces_size; i++)
+			interfaces[i].preference = preference;
+	}
+#endif
+}
+
+
+void
+initifs()
+{
+	int	sock;
+	struct ifconf ifc;
+	struct ifreq ifreq, *ifr;
+	struct sockaddr_in *sin;
+	int n, i;
+	char *buf;
+	int numifs;
+	unsigned bufsize;
+
+	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sock < 0) {
+		logperror("initifs: socket");
+		return;
+	}
+#ifdef SIOCGIFNUM
+	if (ioctl(sock, SIOCGIFNUM, (char *)&numifs) < 0) {
+		numifs = MAXIFS;
+	}
+#else
+	numifs = MAXIFS;
+#endif
+	bufsize = numifs * sizeof(struct ifreq);
+	buf = (char *)malloc(bufsize);
+	if (buf == NULL) {
+		logmsg(LOG_ERR, "out of memory\n");
+		(void) close(sock);
+		return;
+	}
+	if (interfaces != NULL)
+		(void) free(interfaces);
+	interfaces = (struct interface *)ALLIGN(malloc(numifs *
+					sizeof(struct interface)));
+	if (interfaces == NULL) {
+		logmsg(LOG_ERR, "out of memory\n");
+		(void) close(sock);
+		(void) free(buf);
+		return;
+	}
+	interfaces_size = numifs;
+
+	ifc.ifc_len = bufsize;
+	ifc.ifc_buf = buf;
+	if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
+		logperror("initifs: ioctl (get interface configuration)");
+		(void) close(sock);
+		(void) free(buf);
+		return;
+	}
+	ifr = ifc.ifc_req;
+	for (i = 0, n = ifc.ifc_len/sizeof (struct ifreq); n > 0; n--, ifr++) {
+		ifreq = *ifr;
+
+		if (ioctl(sock, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
+			logperror("initifs: ioctl (get interface flags)");
+			continue;
+		}
+		if (ifr->ifr_addr.sa_family != AF_INET)
+			continue;
+		if ((ifreq.ifr_flags & IFF_UP) == 0)
+			continue;
+		if (ifreq.ifr_flags & IFF_LOOPBACK)
+			continue;
+		if ((ifreq.ifr_flags & (IFF_MULTICAST|IFF_BROADCAST|IFF_POINTOPOINT)) == 0)
+			continue;
+		strncpy(interfaces[i].name, ifr->ifr_name, IFNAMSIZ-1);
+
+		sin = (struct sockaddr_in *)ALLIGN(&ifr->ifr_addr);
+		interfaces[i].localaddr = sin->sin_addr;
+		interfaces[i].flags = ifreq.ifr_flags;
+		interfaces[i].netmask.s_addr = (uint32_t)0xffffffff;
+		if (ioctl(sock, SIOCGIFINDEX, (char *)&ifreq) < 0) {
+			logperror("initifs: ioctl (get ifindex)");
+			continue;
+		}
+		interfaces[i].ifindex = ifreq.ifr_ifindex;
+		if (ifreq.ifr_flags & IFF_POINTOPOINT) {
+			if (ioctl(sock, SIOCGIFDSTADDR, (char *)&ifreq) < 0) {
+				logperror("initifs: ioctl (get destination addr)");
+				continue;
+			}
+			sin = (struct sockaddr_in *)ALLIGN(&ifreq.ifr_addr);
+			/* A pt-pt link is identified by the remote address */
+			interfaces[i].address = sin->sin_addr;
+			interfaces[i].remoteaddr = sin->sin_addr;
+			/* Simulate broadcast for pt-pt */
+			interfaces[i].bcastaddr = sin->sin_addr;
+			interfaces[i].flags |= IFF_BROADCAST;
+		} else {
+			/* Non pt-pt links are identified by the local address */
+			interfaces[i].address = interfaces[i].localaddr;
+			interfaces[i].remoteaddr = interfaces[i].address;
+			if (ioctl(sock, SIOCGIFNETMASK, (char *)&ifreq) < 0) {
+				logperror("initifs: ioctl (get netmask)");
+				continue;
+			}
+			sin = (struct sockaddr_in *)ALLIGN(&ifreq.ifr_addr);
+			interfaces[i].netmask = sin->sin_addr;
+			if (ifreq.ifr_flags & IFF_BROADCAST) {
+				if (ioctl(sock, SIOCGIFBRDADDR, (char *)&ifreq) < 0) {
+					logperror("initifs: ioctl (get broadcast address)");
+					continue;
+				}
+				sin = (struct sockaddr_in *)ALLIGN(&ifreq.ifr_addr);
+				interfaces[i].bcastaddr = sin->sin_addr;
+			}
+		}
+		i++;
+	}
+	num_interfaces = i;
+	(void) close(sock);
+	(void) free(buf);
+}

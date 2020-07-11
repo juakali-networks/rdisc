@@ -31,6 +31,7 @@
 
 #define MAX_ADV_INT 600
 
+#define MAXIFS 32
 
 /* Common variables */
 int verbose = 0;
@@ -67,6 +68,7 @@ static void solicitor(struct sockaddr_in *sin);
 static char *pr_name(struct in_addr addr);
 static unsigned short in_cksum(unsigned short *addr, int len);
 
+static void init(void);
 static void graceful_finish(void);
 static void finish(void);
 static void timer(void);
@@ -75,6 +77,7 @@ static void initifs(void);
 /* Statics */
 static int num_interfaces;
 static struct interface *interfaces;
+static int interfaces_size;			/* Number of elements in interfaces */
 static int sendmcast(int s, char *packet, int packetlen, struct sockaddr_in *sin);
 
 /*static int sendmcastif(int s, char *packet, int packetlen, struct sockaddr_in *sin, struct interface *ifp);
