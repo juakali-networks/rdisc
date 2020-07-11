@@ -71,6 +71,7 @@ static void solicitor(struct sockaddr_in *sin);
 static void prusage(void);
 static char *pr_name(struct in_addr addr);
 static void pr_pack(char *buf, int cc, struct sockaddr_in *from);
+
 static char *pr_type(int t);
 static unsigned short in_cksum(unsigned short *addr, int len);
 
@@ -80,15 +81,29 @@ static void finish(void);
 static void timer(void);
 static void initifs(void);
 
+static void logmsg(int const prio, char const *const fmt, ...);
+static int logging = 0;
+static void logperror(char *str);
+
 static int left_until_advertise;
+static void age_table(int time);
+static void record_router(struct in_addr router, int preference, int ttl);
+static void discard_table(void);
 
 /* Statics */
 static int num_interfaces;
 static struct interface *interfaces;
 static int interfaces_size;			/* Number of elements in interfaces */
 static int sendmcast(int s, char *packet, int packetlen, struct sockaddr_in *sin);
-
 static int support_multicast(void);
+static int is_directly_connected(struct in_addr in);
+
+static __inline__ int isbroadcast(struct sockaddr_in *sin)
+{
+	return (sin->sin_addr.s_addr == INADDR_BROADCAST);
+}
+
+
 /*static int sendmcastif(int s, char *packet, int packetlen, struct sockaddr_in *sin, struct interface *ifp);
 */
 int socketfd;		    /* Socket file descriptor */

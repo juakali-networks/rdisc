@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 				forever = 1;
 				break;
 			case 'V':
-				printf(IPUTILS_VERSION("rdisc"));
+				/* printf(IPUTILS_VERSION("rdisc")); */
 				printf("Compiled %s ENABLE_RDISC_SERVER.\n",
 #ifdef RDISC_SERVER
 						"with"
@@ -335,6 +335,189 @@ int support_multicast()
 	return (1);
 }
 
+int join(int sock, struct sockaddr_in *sin)
+{
+	int i, j;
+	struct ip_mreqn mreq;
+	int *joined;
+
+	if (isbroadcast(sin))
+		return (0);
+
+	if ((joined = calloc(num_interfaces, sizeof(int))) == NULL) {
+		logperror("cannot allocate memory");
+		return (-1);
+	}
+	mreq.imr_multiaddr = sin->sin_addr;
+	for (i = 0; i < num_interfaces; i++) {
+		for (j = 0; j < i; j++) {
+			if (joined[j] == interfaces[i].ifindex)
+				break;
+		}
+		if (j != i)
+			continue;
+
+		mreq.imr_ifindex = interfaces[i].ifindex;
+		mreq.imr_address.s_addr = 0;
+
+		if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+			       (char *)&mreq, sizeof(mreq)) < 0) {
+			logperror("setsockopt (IP_ADD_MEMBERSHIP)");
+			free(joined);
+			return (-1);
+		}
+
+		joined[i] = interfaces[i].ifindex;
+	}
+	free(joined);
+	return (0);
+}
+
+int is_directly_connected(struct in_addr in)
+{
+	int i;
+
+	for (i = 0; i < num_interfaces; i++) {
+		/* Check that the subnetwork numbers match */
+
+		if ((in.s_addr & interfaces[i].netmask.s_addr ) ==
+		    (interfaces[i].remoteaddr.s_addr & interfaces[i].netmask.s_addr))
+			return (1);
+	}
+	return (0);
+}
+
+/* Note: this might leave the kernel with no default route for a short time. */
+void age_table(int time)
+{
+	struct table **tpp, *tp;
+	int recalculate_max = 0;
+	int max = max_preference();
+
+	tpp = &table;
+	while (*tpp != NULL) {
+		tp = *tpp;
+		tp->remaining_time -= time;
+		if (tp->remaining_time <= 0) {
+			*tpp = tp->next;
+			if (tp->in_kernel)
+				del_route(tp->router);
+			if (best_preference &&
+			    tp->preference == max)
+				recalculate_max++;
+			free((char *)tp);
+		} else {
+			tpp = &tp->next;
+		}
+	}
+	if (recalculate_max) {
+		int max_pref = max_preference();
+
+		if (max_pref != (int) INELIGIBLE_PREF) {
+			tp = table;
+			while (tp) {
+				if (tp->preference == max_pref && !tp->in_kernel) {
+					add_route(tp->router);
+					tp->in_kernel++;
+				}
+				tp = tp->next;
+			}
+		}
+	}
+}
+
+void discard_table(void)
+{
+	struct table **tpp, *tp;
+
+	tpp = &table;
+	while (*tpp != NULL) {
+		tp = *tpp;
+		*tpp = tp->next;
+		if (tp->in_kernel)
+			del_route(tp->router);
+		free((char *)tp);
+	}
+}
+
+oid
+record_router(struct in_addr router, int pref, int ttl)
+{
+	struct table *tp;
+	int old_max = max_preference();
+	int changed_up = 0;	/* max preference could have increased */
+	int changed_down = 0;	/* max preference could have decreased */
+
+	if (ttl < 4)
+		pref = INELIGIBLE_PREF;
+
+	if (debug)
+		logmsg(LOG_DEBUG, "Recording %s, ttl %d, preference 0x%x\n",
+			 pr_name(router),
+			 ttl,
+			 pref);
+	tp = find_router(router);
+	if (tp) {
+		if (tp->preference > pref &&
+		    tp->preference == old_max)
+			changed_down++;
+		else if (pref > tp->preference)
+			changed_up++;
+		tp->preference = pref;
+		tp->remaining_time = ttl;
+	} else {
+		if (pref > old_max)
+			changed_up++;
+		tp = (struct table *)ALLIGN(malloc(sizeof(struct table)));
+		if (tp == NULL) {
+			logmsg(LOG_ERR, "Out of memory\n");
+			return;
+		}
+		tp->router = router;
+		tp->preference = pref;
+		tp->remaining_time = ttl;
+		tp->in_kernel = 0;
+		tp->next = table;
+		table = tp;
+	}
+	if (!tp->in_kernel &&
+	    (!best_preference || tp->preference == max_preference()) &&
+	    tp->preference != (int) INELIGIBLE_PREF) {
+		add_route(tp->router);
+		tp->in_kernel++;
+	}
+	if (tp->preference == (int) INELIGIBLE_PREF && tp->in_kernel) {
+		del_route(tp->router);
+		tp->in_kernel = 0;
+	}
+	if (best_preference && changed_down) {
+		/* Check if we should add routes */
+		int new_max = max_preference();
+		if (new_max != (int) INELIGIBLE_PREF) {
+			tp = table;
+			while (tp) {
+				if (tp->preference == new_max &&
+				    !tp->in_kernel) {
+					add_route(tp->router);
+					tp->in_kernel++;
+				}
+				tp = tp->next;
+			}
+		}
+	}
+	if (best_preference && (changed_up || changed_down)) {
+		/* Check if we should remove routes already in the kernel */
+		int new_max = max_preference();
+		tp = table;
+		while (tp) {
+			if (tp->preference < new_max && tp->in_kernel) {
+				del_route(tp->router);
+				tp->in_kernel = 0;
+			}
+			tp = tp->next;
+		}
+	}
+}
 
 /*
  *			P R _ N A M E
@@ -858,6 +1041,25 @@ char *pr_type(int t)
 	return(ttab[t]);
 }
 
+void logmsg(int const prio, char const *const fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (logging)
+		vsyslog(prio, fmt, ap);
+	else
+		vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+
+void logperror(char *str)
+{
+	if (logging)
+		syslog(LOG_ERR, "%s: %s", str, strerror(errno));
+	else
+		(void) fprintf(stderr, "%s: %s\n", str, strerror(errno));
+}
 /*
  *                      F I N I S H
  *
