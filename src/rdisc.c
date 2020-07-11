@@ -315,6 +315,25 @@ int sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin
 	return (cc);
 }
 
+int support_multicast()
+{
+	int sock;
+	unsigned char ttl = 1;
+
+	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sock < 0) {
+		logperror("support_multicast: socket");
+		return (0);
+	}
+
+	if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL,
+		       (char *)&ttl, sizeof(ttl)) < 0) {
+		(void) close(sock);
+		return (0);
+	}
+	(void) close(sock);
+	return (1);
+}
 
 
 /*
@@ -618,13 +637,13 @@ void prusage(void)
 void
 pr_pack(char *buf, int cc, struct sockaddr_in *from)
 {
-	struct iphdr *ip;
-	struct icmphdr *icp;
+	struct iphdr *iph;
+	struct icmphdr *icmph;
 	int i;
 	int hlen;
 
-	ip = (struct iphdr *) ALLIGN(buf);
-	hlen = ip->ihl << 2;
+	iph = (struct iphdr *) ALLIGN(buf);
+	hlen = iph->ihl << 2;
 	if (cc < hlen + 8) {
 		if (verbose)
 			logmsg(LOG_INFO, "packet too short (%d bytes) from %s\n", cc,
@@ -632,12 +651,12 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 		return;
 	}
 	cc -= hlen;
-	icp = (struct icmphdr *)ALLIGN(buf + hlen);
+	icmph = (struct icmphdr *)ALLIGN(buf + hlen);
 
-	switch (icp->type) {
+	switch (icmph->type) {
 	case ICMP_ROUTERADVERT:
 	{
-		struct icmp_ra *rap = (struct icmp_ra *)ALLIGN(icp);
+		struct icmp_ra *rap = (struct icmp_ra *)ALLIGN(icmph);
 		struct icmp_ra_addr *ap;
 
 #ifdef RDISC_SERVER
@@ -746,16 +765,16 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 		if (icp->code != 0) {
 			if (verbose)
 				logmsg(LOG_INFO, "ICMP %s from %s: Code = %d\n",
-					      pr_type((int)icp->type),
+					      pr_type((int)icmph->type),
 					      pr_name(from->sin_addr),
-					      icp->code);
+					      icmph->code);
 			return;
 		}
 
 		if (cc < ICMP_MINLEN) {
 			if (verbose)
 				logmsg(LOG_INFO, "ICMP %s from %s: Too short %d, %d\n",
-					      pr_type((int)icp->type),
+					      pr_type((int)icmph->type),
 					      pr_name(from->sin_addr),
 					      cc,
 					      ICMP_MINLEN);
@@ -764,18 +783,18 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 
 		if (verbose)
 			logmsg(LOG_INFO, "ICMP %s from %s\n",
-				      pr_type((int)icp->type),
+				      pr_type((int)icmph->type),
 				      pr_name(from->sin_addr));
 
 		/* Check that ip_src is either a neighbour
 		 * on the arriving link or 0.
 		 */
 		sin.sin_family = AF_INET;
-		if (ip->saddr == 0) {
+		if (iph->saddr == 0) {
 			/* If it was sent to the broadcast address we respond
 			 * to the broadcast address.
 			 */
-			if (IN_CLASSD(ntohl(ip->daddr)))
+			if (IN_CLASSD(ntohl(iph->daddr)))
 				sin.sin_addr.s_addr = htonl(0xe0000001);
 			else
 				sin.sin_addr.s_addr = INADDR_BROADCAST;
@@ -784,11 +803,11 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 				((max_adv_int - min_adv_int)
 				 * (rand() % 1000)/1000);
 		} else {
-			sin.sin_addr.s_addr = ip->saddr;
+			sin.sin_addr.s_addr = iph->saddr;
 			if (!is_directly_connected(sin.sin_addr)) {
 				if (verbose)
 					logmsg(LOG_INFO, "ICMP %s from %s: source not directly connected\n",
-						      pr_type((int)icp->type),
+						      pr_type((int)icmph->type),
 						      pr_name(from->sin_addr));
 				break;
 			}
@@ -800,6 +819,43 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 	}
 #endif
 	}
+}
+
+/*
+ * 			P R _ T Y P E
+ *
+ * Convert an ICMP "type" field to a printable string.
+ */
+
+
+char *pr_type(int t)
+{
+	static char *ttab[] = {
+		"Echo Reply",
+		"ICMP 1",
+		"ICMP 2",
+		"Dest Unreachable",
+		"Source Quench",
+		"Redirect",
+		"ICMP 6",
+		"ICMP 7",
+		"Echo",
+		"Router Advertise",
+		"Router Solicitation",
+		"Time Exceeded",
+		"Parameter Problem",
+		"Timestamp",
+		"Timestamp Reply",
+		"Info Request",
+		"Info Reply",
+		"Netmask Request",
+		"Netmask Reply"
+	};
+
+	if ( t < 0 || t > 16 )
+		return("OUT-OF-RANGE");
+
+	return(ttab[t]);
 }
 
 /*

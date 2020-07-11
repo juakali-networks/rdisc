@@ -71,6 +71,7 @@ static void solicitor(struct sockaddr_in *sin);
 static void prusage(void);
 static char *pr_name(struct in_addr addr);
 static void pr_pack(char *buf, int cc, struct sockaddr_in *from);
+static char *pr_type(int t);
 static unsigned short in_cksum(unsigned short *addr, int len);
 
 static void init(void);
@@ -87,6 +88,7 @@ static struct interface *interfaces;
 static int interfaces_size;			/* Number of elements in interfaces */
 static int sendmcast(int s, char *packet, int packetlen, struct sockaddr_in *sin);
 
+static int support_multicast(void);
 /*static int sendmcastif(int s, char *packet, int packetlen, struct sockaddr_in *sin, struct interface *ifp);
 */
 int socketfd;		    /* Socket file descriptor */
@@ -110,7 +112,26 @@ struct interface
 	char		name[IFNAMSIZ];
 };
 
+#if defined(__GLIBC__) && __GLIBC__ < 2
+/* For router advertisement */
+struct icmp_ra
+{
+	unsigned char	icmp_type;		/* type of message, see below */
+	unsigned char	icmp_code;		/* type sub code */
+	unsigned short	icmp_cksum;		/* ones complement cksum of struct */
+	unsigned char	icmp_num_addrs;
+	unsigned char	icmp_wpa;		/* Words per address */
+	short 	icmp_lifetime;
+};
 
+struct icmp_ra_addr
+{
+	uint32_t	ira_addr;
+	uint32_t	ira_preference;
+};
+#else
+#define icmp_ra icmp
+#endif
 
 
 
