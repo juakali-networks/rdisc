@@ -1102,25 +1102,6 @@ char *pr_type(int t)
 	return(ttab[t]);
 }
 
-void logmsg(int const prio, char const *const fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	if (logging)
-		vsyslog(prio, fmt, ap);
-	else
-		vfprintf(stderr, fmt, ap);
-	va_end(ap);
-}
-
-void logperror(char *str)
-{
-	if (logging)
-		syslog(LOG_ERR, "%s: %s", str, strerror(errno));
-	else
-		(void) fprintf(stderr, "%s: %s\n", str, strerror(errno));
-}
 /*
  *                      F I N I S H
  *
@@ -1154,4 +1135,34 @@ finish()
         exit(0);
 }
 
+/*
+ * LOGGER
+ */
+
+void initlog(void)
+{
+        logging++;
+        openlog("in.rdiscd", LOG_PID | LOG_CONS, LOG_DAEMON);
+}
+
+
+void logmsg(int const prio, char const *const fmt, ...)
+{
+        va_list ap;
+
+        va_start(ap, fmt);
+        if (logging)
+                vsyslog(prio, fmt, ap);
+        else
+                vfprintf(stderr, fmt, ap);
+        va_end(ap);
+}
+
+void logperror(char *str)
+{
+        if (logging)
+                syslog(LOG_ERR, "%s: %s", str, strerror(errno));
+        else
+                (void) fprintf(stderr, "%s: %s\n", str, strerror(errno));
+}
 

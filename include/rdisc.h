@@ -87,6 +87,7 @@ static void finish(void);
 static void timer(void);
 static void initifs(void);
 static void do_fork(void);
+static void initlog(void);
 static void logmsg(int const prio, char const *const fmt, ...);
 static int logging = 0;
 static void logperror(char *str);
@@ -94,6 +95,7 @@ static void logperror(char *str);
 static int left_until_advertise;
 static void age_table(int time);
 static void record_router(struct in_addr router, int preference, int ttl);
+
 static void discard_table(void);
 
 /* Statics */
@@ -104,14 +106,13 @@ static int sendmcast(int s, char *packet, int packetlen, struct sockaddr_in *sin
 static int support_multicast(void);
 static int is_directly_connected(struct in_addr in);
 
+static int sendmcastif(int s, char *packet, int packetlen, struct sockaddr_in *sin, struct interface *ifp);
 static __inline__ int isbroadcast(struct sockaddr_in *sin)
 {
-	return (sin->sin_addr.s_addr == INADDR_BROADCAST);
+        return (sin->sin_addr.s_addr == INADDR_BROADCAST);
 }
 
 
-/*static int sendmcastif(int s, char *packet, int packetlen, struct sockaddr_in *sin, struct interface *ifp);
-*/
 int socketfd;		    /* Socket file descriptor */
 
 /*struct sockaddr_in whereto; / Address to send to /
@@ -119,6 +120,8 @@ int socketfd;		    /* Socket file descriptor */
 int setsockopt(int socket, int level, int option_name,
 const void *option_value, socklen_t option_len);
 */
+struct table *find_router(struct in_addr addr);
+
 
 struct interface
 {
