@@ -65,7 +65,9 @@ int best_preference = 1;  	/* Set to record only the router(s) with the
 #define TIMER_INTERVAL 	3
 #define GETIFCONF_TIMER	30
 
+#define ALLIGN(ptr)	(ptr)
 struct sockaddr_in whereto;/* Address to send to */
+struct table *table;
 
 static void solicitor(struct sockaddr_in *sin);
 static void prusage(void);
@@ -74,13 +76,17 @@ static void pr_pack(char *buf, int cc, struct sockaddr_in *from);
 
 static char *pr_type(int t);
 static unsigned short in_cksum(unsigned short *addr, int len);
+static void record_router(struct in_addr router, int preference, int ttl);
+static void add_route(struct in_addr addr);
+static void del_route(struct in_addr addr);
+static void rtioctl(struct in_addr addr, int op);
 
 static void init(void);
 static void graceful_finish(void);
 static void finish(void);
 static void timer(void);
 static void initifs(void);
-
+static void do_fork(void);
 static void logmsg(int const prio, char const *const fmt, ...);
 static int logging = 0;
 static void logperror(char *str);
@@ -126,6 +132,18 @@ struct interface
 	int		ifindex;
 	char		name[IFNAMSIZ];
 };
+
+/*
+ * TABLES
+ */
+struct table {
+	struct in_addr	router;
+	int		preference;
+	int		remaining_time;
+	int		in_kernel;
+	struct table	*next;
+};
+
 
 #if defined(__GLIBC__) && __GLIBC__ < 2
 /* For router advertisement */

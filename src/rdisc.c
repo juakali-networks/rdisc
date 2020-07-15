@@ -14,7 +14,7 @@
 #include <netdb.h>
 #include <netinet/ip_icmp.h>
 #include <net/if.h>
-
+#include <linux/route.h> 
 
 /* #include <asm-generic/socket.h>
 #include <asm-generic/types.h>
@@ -440,8 +440,7 @@ void discard_table(void)
 	}
 }
 
-oid
-record_router(struct in_addr router, int pref, int ttl)
+void record_router(struct in_addr router, int pref, int ttl)
 {
 	struct table *tp;
 	int old_max = max_preference();
@@ -519,6 +518,59 @@ record_router(struct in_addr router, int pref, int ttl)
 	}
 }
 
+struct table *find_router(struct in_addr addr)
+{
+	struct table *tp;
+
+	tp = table;
+	while (tp) {
+		if (tp->router.s_addr == addr.s_addr)
+			return (tp);
+		tp = tp->next;
+	}
+	return (NULL);
+}
+
+void add_route(struct in_addr addr)
+{
+	if (debug)
+		logmsg(LOG_DEBUG, "Add default route to %s\n", pr_name(addr));
+	rtioctl(addr, SIOCADDRT);
+}
+
+void del_route(struct in_addr addr)
+{
+	if (debug)
+		logmsg(LOG_DEBUG, "Delete default route to %s\n", pr_name(addr));
+	rtioctl(addr, SIOCDELRT);
+}
+
+void rtioctl(struct in_addr addr, int op)
+{
+	int sock;
+	struct rtentry rt;
+	struct sockaddr_in *sin;
+
+	memset((char *)&rt, 0, sizeof(struct rtentry));
+	rt.rt_dst.sa_family = AF_INET;
+	rt.rt_gateway.sa_family = AF_INET;
+	rt.rt_genmask.sa_family = AF_INET;
+	sin = (struct sockaddr_in *)ALLIGN(&rt.rt_gateway);
+	sin->sin_addr = addr;
+	rt.rt_flags = RTF_UP | RTF_GATEWAY;
+
+	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sock < 0) {
+		logperror("rtioctl: socket");
+		return;
+	}
+	if (ioctl(sock, op, (char *)&rt) < 0) {
+		if (!(op == SIOCADDRT && errno == EEXIST))
+			logperror("ioctl (add/delete route)");
+	}
+	(void) close(sock);
+}
+
 /*
  *			P R _ N A M E
  *
@@ -580,8 +632,7 @@ unsigned short in_cksum(unsigned short *addr, int len)
 	return (answer);
 }
 
-void
-init()
+void init()
 {
 	initifs();
 #ifdef RDISC_SERVER
@@ -594,8 +645,7 @@ init()
 }
 
 
-void
-initifs()
+void initifs()
 {
 	int	sock;
 	struct ifconf ifc;
@@ -774,8 +824,7 @@ void do_fork(void)
 }
 
 
-void
-graceful_finish()
+void graceful_finish()
 {
 	discard_table();
 	finish();
@@ -808,6 +857,19 @@ void prusage(void)
 	exit(1);
 }
 
+int max_preference(void)
+{
+	struct table *tp;
+	int max = (int)INELIGIBLE_PREF;
+
+	tp = table;
+	while (tp) {
+		if (tp->preference > max)
+			max = tp->preference;
+		tp = tp->next;
+	}
+	return (max);
+}
 
 /*
  *			P R _ P A C K
@@ -817,8 +879,7 @@ void prusage(void)
  * which arrive ('tis only fair).  This permits multiple copies of this
  * program to be run without having intermingled output (or statistics!).
  */
-void
-pr_pack(char *buf, int cc, struct sockaddr_in *from)
+void pr_pack(char *buf, int cc, struct sockaddr_in *from)
 {
 	struct iphdr *iph;
 	struct icmphdr *icmph;
