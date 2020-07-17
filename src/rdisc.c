@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <error.h>
 #include <errno.h>
 #include <syslog.h>
 #include <signal.h>
@@ -15,16 +16,10 @@
 #include <netinet/ip_icmp.h>
 #include <net/if.h>
 #include <linux/route.h> 
-
-/* #include <asm-generic/socket.h>
-#include <asm-generic/types.h>
-
-#include <uapi/linux/icmp.h>
-#include <asm/checksum.h> 
-#include <net/sock.h> */
+#include <arpa/inet.h>
 #include "rdisc.h"
 #include "ioctl.h"
-
+#include "stdarg.h"
 /*
  * 			M A I N
  */

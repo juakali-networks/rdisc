@@ -91,6 +91,8 @@ static void initlog(void);
 static void logmsg(int const prio, char const *const fmt, ...);
 static int logging = 0;
 static void logperror(char *str);
+static int join(int sock, struct sockaddr_in *sin);
+static void signal_setup(int signo, void (*handler)(void));
 
 static int left_until_advertise;
 static void age_table(int time);
@@ -98,14 +100,13 @@ static void record_router(struct in_addr router, int preference, int ttl);
 
 static void discard_table(void);
 
-/* Statics */
 static int num_interfaces;
 static struct interface *interfaces;
 static int interfaces_size;			/* Number of elements in interfaces */
 static int sendmcast(int s, char *packet, int packetlen, struct sockaddr_in *sin);
 static int support_multicast(void);
 static int is_directly_connected(struct in_addr in);
-
+static int max_preference(void);
 static int sendmcastif(int s, char *packet, int packetlen, struct sockaddr_in *sin, struct interface *ifp);
 static __inline__ int isbroadcast(struct sockaddr_in *sin)
 {
