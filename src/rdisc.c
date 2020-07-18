@@ -32,8 +32,7 @@ char    *sendaddress, *recvaddress;
 int main(int argc, char **argv) 
 {
 
-    	/* solicitor();*/
-	/*test*/
+  
 	printf("Testing the main function...\n");
 
 	struct sockaddr_in from = { 0 };
@@ -246,16 +245,15 @@ void
 solicitor(struct sockaddr_in *sin)
 {
 	static unsigned char outpack[MAXPACKET];
-	struct icmphdr *icmph;
+	struct icmphdr *icmph = (struct icmphdr *) ALLIGN(outpack);;
 	int packetlen, i;
 
-	printf("Sending solicitations to %s\n", pr_name(sin->sin_addr));
+	logmsg(LOG_INFO, "Sending solicitations to %s\n", pr_name(sin->sin_addr));
 	icmph->type = ICMP_ROUTERSOLICIT;
 	icmph->code = 0;
 	icmph->checksum = 0;
 	icmph->un.gateway = 0; /* Reserved */
 	packetlen = 8;
-
 	/* Compute ICMP checksum here */
         icmph->checksum = in_cksum((unsigned short *)icmph, packetlen);
 
@@ -263,9 +261,9 @@ solicitor(struct sockaddr_in *sin)
 
 	if( i < 0 || i != packetlen )  {
 		if( i<0 ) {
-		    printf("solicitor:sendto");
+		    logperror("solicitor:sendto");
 		}
-		/*printk("wrote %s %d chars, ret=%d\n", sendaddress, packetlen, i );*/
+		logmsg(LOG_ERR, "wrote %s %d chars, ret=%d\n", sendaddress, packetlen, i );
 	}
 	
 }
