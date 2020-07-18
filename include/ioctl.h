@@ -156,17 +156,17 @@ struct ttysize {
 #define	FIONREAD	_IOR('f', 127, int)	/* get # bytes to read */
 #define	FIONBIO		_IOW('f', 126, int)	/* set/clear non-blocking i/o */
 #define	FIOASYNC	_IOW('f', 125, int)	/* set/clear async i/o */
-#define	FIOSETOWN	_IOW('f', 124, int)	/* set owner */
-#define	FIOGETOWN	_IOR('f', 123, int)	/* get owner */
+/* #define	FIOSETOWN	_IOW('f', 124, int)	/ set owner */
+/* #define	FIOGETOWN	_IOR('f', 123, int)	/ get owner */
 
 /* socket i/o controls */
 #define	SIOCSHIWAT	_IOW('s',  0, int)		/* set high watermark */
 #define	SIOCGHIWAT	_IOR('s',  1, int)		/* get high watermark */
 #define	SIOCSLOWAT	_IOW('s',  2, int)		/* set low watermark */
 #define	SIOCGLOWAT	_IOR('s',  3, int)		/* get low watermark */
-#define	SIOCATMARK	_IOR('s',  7, int)		/* at oob mark? */
-#define	SIOCSPGRP	_IOW('s',  8, int)		/* set process group */
-#define	SIOCGPGRP	_IOR('s',  9, int)		/* get process group */
+/* #define	SIOCATMARK	_IOR('s',  7, int)		/ at oob mark? */
+/* #define	SIOCSPGRP	_IOW('s',  8, int)		/ set process group */
+/* #define	SIOCGPGRP	_IOR('s',  9, int)		/ get process group */
 
 #define	SIOCADDRT	_IOW('r', 10, struct rtentry)	/* add route */
 #define	SIOCDELRT	_IOW('r', 11, struct rtentry)	/* delete route */

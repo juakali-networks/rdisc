@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <signal.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <netinet/ip_icmp.h>
@@ -20,6 +21,8 @@
 #include "rdisc.h"
 #include "ioctl.h"
 #include "stdarg.h"
+
+
 /*
  * 			M A I N
  */
