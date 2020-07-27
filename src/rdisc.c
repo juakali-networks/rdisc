@@ -13,13 +13,14 @@
 #include <signal.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netdb.h>
 #include <netinet/ip_icmp.h>
 #include <net/if.h>
 #include <linux/route.h> 
 #include <arpa/inet.h>
 #include "rdisc.h"
-#include "ioctl.h"
+#include "sockios.h"
 #include "stdarg.h"
 
 
@@ -272,7 +273,10 @@ int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
 {
 	int i, cc;
 
+	logmsg(LOG_INFO, "AM HERERE..........\n");
+	logmsg(LOG_INFO, "num_interfaces: %d\n", num_interfaces);
 	for (i = 0; i < num_interfaces; i++) {
+		logmsg(LOG_INFO, "hehehhehe\n");
 		if ((interfaces[i].flags & (IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST)) == 0)
 			continue;
 	       cc = sendmcastif(socket, packet, packetlen, sin, &interfaces[i]);
@@ -289,7 +293,7 @@ int sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin
 	{
 	int cc;
 	struct ip_mreqn mreqn;
-
+	logmsg(LOG_INFO, "WHAT ABOUT .....\n");
 	memset(&mreqn, 0, sizeof(mreqn));
 	mreqn.imr_ifindex = ifp->ifindex;
 	mreqn.imr_address = ifp->localaddr;
@@ -684,9 +688,10 @@ void initifs()
 	interfaces_size = numifs;
 
 	ifc.ifc_len = bufsize;
-	ifc.ifc_buf = buf;
+	ifc.ifc_ifcu.ifcu_buf = buf;
+	logmsg(LOG_DEBUG, "check %d\n", ioctl(sock, SIOCGIFCONF, (char *)&ifc));
 	if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
-		logperror("initifs: ioctl (get interface configuration)");
+		logperror("initifs: ioctl (get interface configuration--)");
 		(void) close(sock);
 		(void) free(buf);
 		return;
