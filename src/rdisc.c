@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 {
 
   
-	printf("Testing the main function...\n");
+
 
 	struct sockaddr_in from = { 0 };
 	char **av = argv;
@@ -261,12 +261,15 @@ solicitor(struct sockaddr_in *sin)
 	logmsg(LOG_INFO, "ismulticast: %d\n", ismulticast(sin));
 	logmsg(LOG_INFO, "Sending solicitations to %s\n", pr_name(sin->sin_addr));
 
-	i = sendbcast(socketfd, (char *)outpack, packetlen);
 	
 	if (ismulticast(sin))
 		i = sendmcast(socketfd, (char *)outpack, packetlen, sin);
 	else if (isbroadcast(sin))
 		i = sendbcast(socketfd, (char *)outpack, packetlen);
+
+	else
+		i = sendto(socketfd, (char *)outpack, packetlen, 0,
+			   (struct sockaddr *)sin, sizeof(struct sockaddr));
 
 	if( i < 0 || i != packetlen )  {
 		if( i<0 ) {
@@ -736,7 +739,7 @@ void initifs()
 
 	ifc.ifc_len = bufsize;
 	ifc.ifc_ifcu.ifcu_buf = buf;
-	logmsg(LOG_DEBUG, "check %d\n", ioctl(sock, SIOCGIFCONF, (char *)&ifc));
+	
 	if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
 		logperror("initifs: ioctl (get interface configuration--)");
 		(void) close(sock);
