@@ -249,7 +249,6 @@ solicitor(struct sockaddr_in *sin)
 	struct icmphdr *icmph = (struct icmphdr *) ALLIGN(outpack);;
 	int packetlen, i;
 
-	logmsg(LOG_INFO, "Sending solicitations to %s\n", pr_name(sin->sin_addr));
 	icmph->type = ICMP_ROUTERSOLICIT;
 	icmph->code = 0;
 	icmph->checksum = 0;
@@ -260,11 +259,14 @@ solicitor(struct sockaddr_in *sin)
 
 	logmsg(LOG_INFO, "isbroadcast: %d\n", isbroadcast(sin));
 	logmsg(LOG_INFO, "ismulticast: %d\n", ismulticast(sin));
+	logmsg(LOG_INFO, "Sending solicitations to %s\n", pr_name(sin->sin_addr));
 
-	/* if (isbroadcast(sin))*/
 	i = sendbcast(socketfd, (char *)outpack, packetlen);
-	/* else  if (ismulticast(sin))
-		i = sendmcast(socketfd, (char *)outpack, packetlen, sin);*/
+	
+	if (ismulticast(sin))
+		i = sendmcast(socketfd, (char *)outpack, packetlen, sin);
+	else if (isbroadcast(sin))
+		i = sendbcast(socketfd, (char *)outpack, packetlen);
 
 	if( i < 0 || i != packetlen )  {
 		if( i<0 ) {
@@ -279,10 +281,8 @@ int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
 {
 	int i, cc;
 
-	logmsg(LOG_INFO, "AM HERERE..........\n");
-	logmsg(LOG_INFO, "num_interfaces: %d\n", num_interfaces);
 	for (i = 0; i < num_interfaces; i++) {
-		logmsg(LOG_INFO, "heheehe\n");
+
 		if ((interfaces[i].flags & (IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST)) == 0)
 			continue;
 	       cc = sendmcastif(socket, packet, packetlen, sin, &interfaces[i]);
@@ -324,7 +324,6 @@ int
 sendbcast(int socket, char *packet, int packetlen)
 {
 	int i, cc;
-	logmsg(LOG_INFO, "WHATAA ABOUT .....\n");
 
 	for (i = 0; i < num_interfaces; i++) {
 		if ((interfaces[i].flags & (IFF_BROADCAST|IFF_POINTOPOINT)) == 0)
