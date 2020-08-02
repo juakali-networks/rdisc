@@ -103,11 +103,21 @@ static void discard_table(void);
 static int num_interfaces;
 static struct interface *interfaces;
 static int interfaces_size;			/* Number of elements in interfaces */
-static int sendmcast(int s, char *packet, int packetlen, struct sockaddr_in *sin);
+
 static int support_multicast(void);
 static int is_directly_connected(struct in_addr in);
 static int max_preference(void);
+
+static int sendmcast(int s, char *packet, int packetlen, struct sockaddr_in *sin);
 static int sendmcastif(int s, char *packet, int packetlen, struct sockaddr_in *sin, struct interface *ifp);
+static int sendbcast(int s, char *packet, int packetlen);
+static int sendbcastif(int s, char *packet, int packetlen, struct interface *ifp);
+
+static __inline__ int ismulticast(struct sockaddr_in *sin)
+{
+	return IN_CLASSD(ntohl(sin->sin_addr.s_addr));
+}
+
 static __inline__ int isbroadcast(struct sockaddr_in *sin)
 {
         return (sin->sin_addr.s_addr == INADDR_BROADCAST);

@@ -258,7 +258,13 @@ solicitor(struct sockaddr_in *sin)
 	/* Compute ICMP checksum here */
         icmph->checksum = in_cksum((unsigned short *)icmph, packetlen);
 
-	i = sendmcast(socketfd, (char *)outpack, packetlen, sin);
+	logmsg(LOG_INFO, "isbroadcast: %d\n", isbroadcast(sin));
+	logmsg(LOG_INFO, "ismulticast: %d\n", ismulticast(sin));
+
+	/* if (isbroadcast(sin))*/
+	i = sendbcast(socketfd, (char *)outpack, packetlen);
+	/* else  if (ismulticast(sin))
+		i = sendmcast(socketfd, (char *)outpack, packetlen, sin);*/
 
 	if( i < 0 || i != packetlen )  {
 		if( i<0 ) {
@@ -276,7 +282,7 @@ int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
 	logmsg(LOG_INFO, "AM HERERE..........\n");
 	logmsg(LOG_INFO, "num_interfaces: %d\n", num_interfaces);
 	for (i = 0; i < num_interfaces; i++) {
-		logmsg(LOG_INFO, "hehehhehe\n");
+		logmsg(LOG_INFO, "heheehe\n");
 		if ((interfaces[i].flags & (IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST)) == 0)
 			continue;
 	       cc = sendmcastif(socket, packet, packetlen, sin, &interfaces[i]);
@@ -293,7 +299,6 @@ int sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin
 	{
 	int cc;
 	struct ip_mreqn mreqn;
-	logmsg(LOG_INFO, "WHAT ABOUT .....\n");
 	memset(&mreqn, 0, sizeof(mreqn));
 	mreqn.imr_ifindex = ifp->ifindex;
 	mreqn.imr_address = ifp->localaddr;
@@ -312,6 +317,49 @@ int sendmcastif(int socket, char *packet, int packetlen, struct sockaddr_in *sin
 		printf("sendmcast: Cannot send multicast packet over interface %s, %s\n",
 		       ifp->name, pr_name(mreqn.imr_address));
 	}
+	return (cc);
+}
+
+int
+sendbcast(int socket, char *packet, int packetlen)
+{
+	int i, cc;
+	logmsg(LOG_INFO, "WHATAA ABOUT .....\n");
+
+	for (i = 0; i < num_interfaces; i++) {
+		if ((interfaces[i].flags & (IFF_BROADCAST|IFF_POINTOPOINT)) == 0)
+			continue;
+		cc = sendbcastif(socket, packet, packetlen, &interfaces[i]);
+		if (cc!= packetlen) {
+			return (cc);
+		}
+	}
+	return (packetlen);
+}
+
+int
+sendbcastif(int socket, char *packet, int packetlen, struct interface *ifp)
+{
+	int on;
+	int cc;
+	struct sockaddr_in baddr;
+
+	baddr.sin_family = AF_INET;
+	baddr.sin_addr = ifp->bcastaddr;
+	if (debug)
+		logmsg(LOG_DEBUG, "Broadcast to %s\n",
+			 pr_name(baddr.sin_addr));
+	on = 1;
+	setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)&on, sizeof(on));
+	cc = sendto(socket, packet, packetlen, 0,
+		    (struct sockaddr *)&baddr, sizeof (struct sockaddr));
+	if (cc!= packetlen) {
+		logperror("sendbcast: sendto");
+		logmsg(LOG_ERR, "Cannot send broadcast packet to %s\n",
+		       pr_name(baddr.sin_addr));
+	}
+	on = 0;
+	setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char*)&on, sizeof(on));
 	return (cc);
 }
 
