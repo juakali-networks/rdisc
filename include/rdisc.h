@@ -70,6 +70,11 @@ struct sockaddr_in whereto;/* Address to send to */
 struct table *table;
 
 static void solicitor(struct sockaddr_in *sin);
+
+#ifdef RDISC_SERVER
+static void advertise(struct sockaddr_in *sin, int lft);
+#endif
+
 static void prusage(void);
 static char *pr_name(struct in_addr addr);
 static void pr_pack(char *buf, int cc, struct sockaddr_in *from);
