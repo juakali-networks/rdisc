@@ -1,7 +1,7 @@
 /*
  * Rdisc for Ubuntu
- * Peter Wanawunga
- * Peter.Wanawunga@gmail.com
+ * Peter Kabiri
+ * Peter.Kabiri@gmail.com
 */
 #include <stdio.h>
 #include <string.h>
