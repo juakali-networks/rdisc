@@ -1,6 +1,11 @@
 IDIR =../include
+
+
 CC=gcc
 CFLAGS=-I$(IDIR)
+
+# rdisc server (-r option) support [no|yes]
+#ENABLE_RDISC_SERVER=yes
 
 ODIR=obj
 LDIR =../lib
@@ -15,11 +20,11 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
 $(ODIR)/%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -DRDISC_SERVER -c -o $@ $< $(CFLAGS)
 
 rdisc: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
-#       $(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS) 
+      
 
 
 .PHONY: clean

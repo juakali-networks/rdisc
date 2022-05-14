@@ -13,7 +13,7 @@
 
 /* Codes for Router Discovery*/
 #define ICMP_ROUTERSOLICIT          10       /* Router Solicitation  */
-
+#define ICMP_ROUTERADVERT           9        /* Router Adveritisement */
 
 #define	MAXPACKET	4096	/* max packet size */			
 

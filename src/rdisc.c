@@ -19,6 +19,7 @@
 #include <net/if.h>
 #include <linux/route.h> 
 #include <arpa/inet.h>
+#include <sys/ioctl.h>
 #include "rdisc.h"
 #include "sockios.h"
 #include "stdarg.h"
@@ -44,7 +45,7 @@ int main(int argc, char **argv)
 #ifdef RDISC_SERVER
 	int val;
 
-	atexit(close_stdout);
+	/* atexit(close_stdout); */
 	min_adv_int =( max_adv_int * 3 / 4);
 	lifetime = (3*max_adv_int);
 #endif
@@ -182,11 +183,11 @@ next:
 	memset( (char *)&joinaddr, 0, sizeof(struct sockaddr_in) );
 	joinaddr.sin_family = AF_INET;
 	joinaddr.sin_addr.s_addr = inet_addr(recvaddress);
-
-#ifdef RDISC_SERVER
+/*Cleanup: Reactivate this code
+ #ifdef RDISC_SERVER
 	if (responder)
 		iputils_srand();
-#endif
+#endif*/
 
 	if ((socketfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
 		logperror("socket");
@@ -279,6 +280,88 @@ solicitor(struct sockaddr_in *sin)
 	}
 	
 }
+
+#ifdef RDISC_SERVER
+/*
+ * 			A V E R T I S E
+ *
+ * Compose and transmit an ICMP ROUTER ADVERTISEMENT packet.
+ * The IP packet will be added on by the kernel.
+ */
+void
+advertise(struct sockaddr_in *sin, int lft)
+{
+	static unsigned char outpack[MAXPACKET];
+	struct icmp_ra *rap = (struct icmp_ra *) ALLIGN(outpack);
+	struct icmp_ra_addr *ap;
+	int packetlen, i, cc;
+
+	if (verbose) {
+		logmsg(LOG_INFO, "Sending advertisement to %s\n",
+			 pr_name(sin->sin_addr));
+	}
+
+	for (i = 0; i < num_interfaces; i++) {
+		rap->icmp_type = ICMP_ROUTERADVERT;
+		rap->icmp_code = 0;
+		rap->icmp_cksum = 0;
+		rap->icmp_num_addrs = 0;
+		rap->icmp_wpa = 2;
+		rap->icmp_lifetime = htons(lft);
+		packetlen = 8;
+
+		/*
+		 * TODO handle multiple logical interfaces per
+		 * physical interface. (increment with rap->icmp_wpa * 4 for
+		 * each address.)
+		 */
+		ap = (struct icmp_ra_addr *)ALLIGN(outpack + ICMP_MINLEN);
+		ap->ira_addr = interfaces[i].localaddr.s_addr;
+		ap->ira_preference = htonl(interfaces[i].preference);
+		packetlen += rap->icmp_wpa * 4;
+		rap->icmp_num_addrs++;
+
+		/* Compute ICMP checksum here */
+		rap->icmp_cksum = in_cksum( (unsigned short *)rap, packetlen );
+
+		if (isbroadcast(sin))
+			cc = sendbcastif(socketfd, (char *)outpack, packetlen,
+					&interfaces[i]);
+		else if (ismulticast(sin))
+			cc = sendmcastif(socketfd, (char *)outpack, packetlen, sin,
+					&interfaces[i]);
+		else {
+			struct interface *ifp = &interfaces[i];
+			/*
+			 * Verify that the interface matches the destination
+			 * address.
+			 */
+			if ((sin->sin_addr.s_addr & ifp->netmask.s_addr) ==
+			    (ifp->address.s_addr & ifp->netmask.s_addr)) {
+				if (debug) {
+					logmsg(LOG_DEBUG, "Unicast to %s ",
+						 pr_name(sin->sin_addr));
+					logmsg(LOG_DEBUG, "on interface %s, %s\n",
+						 ifp->name,
+						 pr_name(ifp->address));
+				}
+				cc = sendto(socketfd, (char *)outpack, packetlen, 0,
+					    (struct sockaddr *)sin,
+					    sizeof(struct sockaddr));
+			} else
+				cc = packetlen;
+		}
+		if( cc < 0 || cc != packetlen )  {
+			if (cc < 0) {
+				logperror("sendto");
+			} else {
+				logmsg(LOG_ERR, "wrote %s %d chars, ret=%d\n",
+				       sendaddress, packetlen, cc );
+			}
+		}
+	}
+}
+#endif
 
 int sendmcast(int socket, char *packet, int packetlen, struct sockaddr_in *sin)
 {
@@ -892,6 +975,7 @@ void prusage(void)
 		"  -b               accept best only (default)\n"
 		"  -d               enable debug syslog messages\n"
 		"  -f               run forever\n"
+		"  -x               reiimfTse this. only for testing copilling\n"
 #ifdef RDISC_SERVER
 		"  -r               responder mode\n"
 #endif
@@ -1053,11 +1137,11 @@ void pr_pack(char *buf, int cc, struct sockaddr_in *from)
 		if (in_cksum((unsigned short *)ALLIGN(buf+hlen), cc)) {
 			if (verbose)
 				logmsg(LOG_INFO, "ICMP %s from %s: Bad checksum\n",
-					      pr_type((int)icp->type),
+					      pr_type((int)icmph->type),
 					      pr_name(from->sin_addr));
 			return;
 		}
-		if (icp->code != 0) {
+		if (icmph->code != 0) {
 			if (verbose)
 				logmsg(LOG_INFO, "ICMP %s from %s: Code = %d\n",
 					      pr_type((int)icmph->type),
