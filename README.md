@@ -28,3 +28,9 @@ sudo ./rdisc -r
 Send a router advertisement message either periodically or in response to a router solicitation message.
 
 
+sudo ./rdisc -s 192.168.0.10
+
+Send solicitation messages to a specific address. This is also broadcast on the LAN
+
+
+
