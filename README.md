@@ -46,7 +46,7 @@ On Linux PC 1. run
 <pre>sudo ./rdisc -s</pre>
 
 
-On Linux PC 1. run
+On Linux PC 2. run
 
 <pre>sudo ./rdisc -r</pre>
 
