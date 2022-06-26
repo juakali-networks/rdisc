@@ -30,7 +30,7 @@ Sends three solicitation messages to a LAN (using the all-routers.mcast.net (224
 <pre>sudo ./rdisc -r</pre>
 
 
-Send a router advertisement message either periodically or in response to a router solicitation message.
+Sends a router advertisement message either periodically or in response to a router solicitation message.
 
 
 <pre>sudo ./rdisc -s 192.168.0.10</pre>
