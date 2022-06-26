@@ -18,6 +18,6 @@ cd rdisc/src
 
 make
 
-rdisc -s
+sudo ./rdisc -s
 
-Send three solicitation messages initially to quickly discover the routers when the system is booted. 
+Send three solicitation messages to all interfaces to quickly discover the connected routers (sent  to all-routers.mcast.net (224.0.0.2)). 
