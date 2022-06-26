@@ -11,24 +11,28 @@ The ICMP Router Adverisement Message is sent by a router (or routing computer)  
 
 
 # Usage
-git clone https://github.com/Peters-Lab/rdisc.git
+<pre> git clone https://github.com/Peters-Lab/rdisc.git</pre>
 
 
 <pre>cd rdisc/src</pre>
 
-make
+<pre>make</pre>
 
-sudo ./rdisc -s
+
+<pre>sudo ./rdisc -s</pre>
+
 
 Send three solicitation messages to LAN (using the all-routers.mcast.net (224.0.0.2) asking if there is a router(224.0.0.2)). 
 
 
-sudo ./rdisc -r
+<pre>sudo ./rdisc -r</pre>
+
 
 Send a router advertisement message either periodically or in response to a router solicitation message.
 
 
-sudo ./rdisc -s 192.168.0.10
+<pre>sudo ./rdisc -s 192.168.0.10</pre>
+
 
 Send solicitation messages to a specific address. This is also broadcast on the LAN.
 
@@ -37,11 +41,13 @@ Send solicitation messages to a specific address. This is also broadcast on the 
 Linux PC 1 and Linux PC 2 all on the same LAN
 
 On Linux PC 1. run
-sudo ./rdisc -s
+<pre>sudo ./rdisc -s</pre>
+
 
 On Linux PC 1. run
 
-sudo ./rdisc -r
+<pre>sudo ./rdisc -r</pre>
+
 
 
 
