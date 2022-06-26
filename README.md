@@ -1,5 +1,5 @@
 # rdisc
-ICMPv4 Router Solicitation Protocol and ICMPv4 Router Adverisement Protocol
+#ICMPv4 Router Solicitation Protocol and ICMPv4 Router Adverisement Protocol
 #
 
 This is the linux implementation of the IICMPv4 Router Solicitation Protocol and ICMPv4 Router Adverisement Protocol (RFC1256) using the C programming language. 
@@ -10,14 +10,14 @@ The ICMP Router Soicitation Message is sent by a computer host to any routers th
 The ICMP Router Adverisement Message is sent by a router (or routing computer)  to announce that its IP address as available for routing.  THe ICMP Router Adverisement Message is sent on receiving the ICMP Router Soicitation Message.
 
 
+# Usage
+git clone https://github.com/Peters-Lab/rdisc.git
 
-# git clone https://github.com/Peters-Lab/rdisc.git
 
+cd rdisc/src
 
-# cd rdisc/src
+make
 
-# make
-
-# rdisc -s
+rdisc -s
 
 Send three solicitation messages initially to quickly discover the routers when the system is booted. 
