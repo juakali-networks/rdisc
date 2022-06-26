@@ -11,13 +11,13 @@ The ICMP Router Adverisement Message is sent by a router (or routing computer)  
 
 
 
-git clone https://github.com/Peters-Lab/rdisc.git
+# git clone https://github.com/Peters-Lab/rdisc.git
 
 
-cd rdisc/src
+# cd rdisc/src
 
-make
+# make
 
-rdisc -s
+# rdisc -s
 
 Send three solicitation messages initially to quickly discover the routers when the system is booted. 
