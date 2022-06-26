@@ -21,3 +21,10 @@ make
 sudo ./rdisc -s
 
 Send three solicitation messages to LAN (using the all-routers.mcast.net (224.0.0.2) asking if there is a router(224.0.0.2)). 
+
+
+sudo ./rdisc -r
+
+Send a router advertisement message either periodically or in response to a router solicitation message.
+
+
