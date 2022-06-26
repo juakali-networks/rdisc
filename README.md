@@ -14,7 +14,7 @@ The ICMP Router Adverisement Message is sent by a router (or routing computer)  
 git clone https://github.com/Peters-Lab/rdisc.git
 
 
-# cd rdisc/src #
+<pre>cd rdisc/src</pre>
 
 make
 
