@@ -40,7 +40,7 @@ Send solicitation messages to a specific address. This is also broadcast on the 
 
 # Example
 
-Linux PC 1 and Linux PC 2 all on the same LAN
+Linux PC 1 and Linux PC 2 are both on the same LAN
 
 On Linux PC 1. run
 <pre>sudo ./rdisc -s</pre>
