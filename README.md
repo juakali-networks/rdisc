@@ -24,7 +24,7 @@ make
 
 
 
-Send three solicitation messages to LAN (using the all-routers.mcast.net (224.0.0.2) asking if there is a router(224.0.0.2)). 
+Sends three solicitation messages to a LAN (using the all-routers.mcast.net (224.0.0.2)) asking if there is a router.
 
 
 <pre>sudo ./rdisc -r</pre>
