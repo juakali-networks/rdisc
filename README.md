@@ -20,7 +20,7 @@ make
 
 # Usage
 
-<pre>sudo ./rdisc -s</pre>
+<pre>/rdisc/src$ sudo ./rdisc -s</pre>
 
 
 
