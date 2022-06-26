@@ -1,5 +1,5 @@
 # 
-# (rdsic) ICMPv4 Router Solicitation Protocol and ICMPv4 Router Adverisement Protocol
+# ICMPv4 Router Solicitation Protocol and ICMPv4 Router Adverisement Protocol
 #
 
 This is the linux implementation of the IICMPv4 Router Solicitation Protocol and ICMPv4 Router Adverisement Protocol (RFC1256) using the C programming language. 
