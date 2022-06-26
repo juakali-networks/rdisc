@@ -11,10 +11,10 @@ The ICMP Router Advertisement Message is sent by a router (or routing computer) 
 
 
 # Usage
-<pre> git clone https://github.com/Peters-Lab/rdisc.git</pre>
+<pre> git clone https://github.com/Peters-Lab/rdisc.git
 
 
-<pre>cd rdisc/src
+cd rdisc/src
 
 make</pre>
 
