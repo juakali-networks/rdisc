@@ -20,4 +20,4 @@ make
 
 sudo ./rdisc -s
 
-Send three solicitation messages to all interfaces to quickly discover the connected routers (sent  to all-routers.mcast.net (224.0.0.2)). 
+Send three solicitation messages to LAN (using the all-routers.mcast.net (224.0.0.2) asking if there is a router(224.0.0.2)). 
