@@ -1,5 +1,5 @@
 # 
-# ICMPv4 Router Solicitation Protocol and ICMPv4 Router Adverisement Protocol
+# ICMPv4 Router Solicitation Protocol and ICMPv4 Router Advertisement Protocol
 #
 
 This is the linux implementation of the ICMPv4 Router Solicitation Protocol and the ICMPv4 Router Adverisement Protocol (RFC1256) using the C programming language. 
