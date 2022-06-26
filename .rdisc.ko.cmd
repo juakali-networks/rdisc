@@ -1,1 +1,0 @@
-cmd_/home/peter/Mobile_IP/source/rdisc/rdisc.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000  --build-id  -T ./scripts/module-common.lds -o /home/peter/Mobile_IP/source/rdisc/rdisc.ko /home/peter/Mobile_IP/source/rdisc/rdisc.o /home/peter/Mobile_IP/source/rdisc/rdisc.mod.o;  true
