@@ -10,7 +10,7 @@ The ICMP Router Solicitation Message is sent by a computer host to any routers (
 The ICMP Router Advertisement Message is sent by a router (or routing computer) to announce that its IP address is available for routing.  The ICMP Router Adverisement Message is also sent when the router (or routing computer) receives the ICMP Router Soicitation Message.
 
 
-# Usage
+# Building
 <pre> git clone https://github.com/Peters-Lab/rdisc.git
 
 
@@ -19,7 +19,10 @@ cd rdisc/src
 make</pre>
 
 
+# Usage
+
 <pre>sudo ./rdisc -s</pre>
+
 
 
 Send three solicitation messages to LAN (using the all-routers.mcast.net (224.0.0.2) asking if there is a router(224.0.0.2)). 
