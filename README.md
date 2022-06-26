@@ -32,5 +32,15 @@ sudo ./rdisc -s 192.168.0.10
 
 Send solicitation messages to a specific address. This is also broadcast on the LAN.
 
+######################   
+# Linux PC 1         #  
+#                    # 
+#                    # 
+# sudo ./rdisc -s    #    
+#                    # 
+#                    #                              
+######################   
+
+
 
 
