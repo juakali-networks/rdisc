@@ -39,7 +39,7 @@ docker build  -t rdisc_src .
 
 
 
-# open the containers in different terminals
+# Open the containers in different terminals
 
 <pre>docker exec -it CONTAINER_ID1 rdisc sh</pre>
 <pre>docker exec -it CONTAINER_ID2 rdisc sh</pre>
