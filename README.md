@@ -12,7 +12,7 @@ The ICMP Router Advertisement Message is sent by a router (or routing computer) 
 
 # Building
 <pre> 
-git clone https://github.com/Peters-Lab/rdisc.git
+git clone https://github.com/juakali-network/rdisc.git
 cd rdisc/src
 make
 </pre>
