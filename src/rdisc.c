@@ -1,7 +1,8 @@
 /*
  * Rdisc for Ubuntu
- * Peter Kabiri
- * Peter.Kabiri@gmail.com
+ * Contact us on
+ * juakali.networks@gmail.com
+ * We ask for a donation to a charity in Tanzania to help orphaned Kids
 */
 #include <stdio.h>
 #include <string.h>
