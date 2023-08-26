@@ -20,9 +20,9 @@ docker build  -t rdisc_src .
 </pre>
 
 
-## Run docker image
 
-## i<pre>docker run -it rdisc_src</pre>
+
+
 
 
 
