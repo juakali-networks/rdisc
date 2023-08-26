@@ -12,7 +12,7 @@ Docker is installed
 
 
 
-# Building docker Image
+# Building the docker Image
 <pre> 
 
 cd tests
@@ -20,9 +20,9 @@ docker build  -t rdisc_src .
 </pre>
 
 
-# Run docker Image
+## Run docker image
 
-<pre>docker run -it rdisc_src</pre>
+## i<pre>docker run -it rdisc_src</pre>
 
 
 
@@ -31,7 +31,7 @@ docker build  -t rdisc_src .
 <pre>docker network create -d bridge rdisc-network</pre>
 
 
-# Create two conatiners and map them to network.
+# Create two containers and map them to the network.
 
 <pre>docker ps</pre>
 <pre>docker run -itd --network=rdisc-network rdisc sh</pre>
@@ -39,7 +39,7 @@ docker build  -t rdisc_src .
 
 
 
-# open the containers in differenent terminals
+# open the containers in different terminals
 
 <pre>docker exec -it CONTAINER_ID1 rdisc sh</pre>
 <pre>docker exec -it CONTAINER_ID2 rdisc sh</pre>
