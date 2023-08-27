@@ -18,4 +18,7 @@ RUN apt-get install -y iputils-ping
 RUN apt-get install -y tcpdump
 RUN apt-get install -y git
 RUN apt-get install -y make
+RUN git clone https://github.com/juakali-networks/rdisc.git
+WORKDIR "rdisc/src"
+RUN make
 CMD [“echo”,”Image created”] 
