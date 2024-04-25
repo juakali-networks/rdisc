@@ -17,6 +17,7 @@ Docker is installed
 
 cd tests
 docker build  -t rdisc_src .
+docker build  -t rdisc_dst .
 </pre>
 
 
