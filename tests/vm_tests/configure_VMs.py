@@ -25,7 +25,7 @@ class setup_vm():
        
         vm_user = "%s@%s" % (self._user_name, vm_ip)
 
-        cmd = "echo '%s' | sudo -S rm -r mip" % self._pwd
+        cmd = "echo '%s' | sudo -S rm -r rdisc" % self._pwd
         vm_process = subprocess.Popen(['ssh','-tt', vm_user, "%s" % cmd],
                                     stdin=subprocess.PIPE, 
                                     stdout = subprocess.PIPE,
