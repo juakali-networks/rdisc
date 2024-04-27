@@ -1,0 +1,24 @@
+name: rdisc CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    # runs-on: ubuntu-latest
+    runs-on: self-hosted
+    # runs-on: [self-hosted, linux, x64, gpu]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Configure Virtual Machines
+      run: python3 tests/configure_VMs.py
+    #- name: Run router solicitation test
+    #  run: python3 tests/router_solicit.py
+    - name: Run router advertisement test
+      run: python3 tests/router_advert.py    
+   
