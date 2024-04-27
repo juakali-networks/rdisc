@@ -1,8 +1,9 @@
 /*
- * Rdisc for Ubuntu
- * Contact us on
+ * Rdisc implementation for Ubuntu.
+ * For questions, queries or if you need any support contact us on
  * juakali.networks@gmail.com
- * We ask for a donation to a charity in Tanzania to help orphaned Kids
+ * If u need us to implement for you any custom network protocol or automated tests, you can still contact us.
+ * Any donations to help us maintain our work will be greatly appreciated. 
 */
 #include <stdio.h>
 #include <string.h>
