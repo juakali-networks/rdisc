@@ -20,7 +20,8 @@ class router_discovery():
 
         self._ip1 = "192.168.0.34"
         self._ip2 = "192.168.0.240"
-    
+        self._local_path = '/home/dancer/rdisc/tests/results'
+        ### Settings #####
   
         self._router_advertisement_msg_type = 1
         self._all_host_mcast_addr = "224.0.0.1"
@@ -28,16 +29,15 @@ class router_discovery():
         self._icmp_ra_code = "0"
         self._dest_addr = self._ip1
     
-        self._file = 'agent_adv.pcap'
-        self._local_path = '~/rdisc/tests/results'
+        self._file_name = 'agent_adv.pcap'
+        self._file_path = "%s/%s" % (self._local_path, self._file_name )
 
- 
     def step_1(self):
-
-        subprocess.run(["rm results/agent_adv.pcap"], shell=True, capture_output=False)
+        
+        subprocess.run(["rm %s" % self._file_path], shell=True, capture_output=False)
 
         print("Router solicitation message sent by host\n")
-
+        
         vm_user = "%s@%s" % (self._user_name, self._ip2)
         try:
             vm2_process = subprocess.Popen(['ssh','-tt', vm_user, "echo '%s' | sudo -S  ./rdisc/src/rdisc -s" % self._pwd],
@@ -83,7 +83,7 @@ class router_discovery():
             print("Test Failed")
 
         
-        # self.clean_up()
+        self.clean_up()
 
         return state
 
@@ -94,10 +94,9 @@ class router_discovery():
         """
         state = list()
 
-
         ssh = self.createSSHClient(self._ip2, 22, self._user_name, self._pwd)
         scp = SCPClient(ssh.get_transport())
-        scp.get(remote_path=self._file, local_path=self._local_path)
+        scp.get(remote_path=self._file_name, local_path=self._local_path)
         scp.close()
 
         vm_user = "%s@%s" % (self._user_name, self._ip2)
@@ -132,7 +131,7 @@ class router_discovery():
         # username = "%s" % self._pwd
         ssh = self.createSSHClient(self._ip2, 22, self._pwd, self._pwd)
         scp = SCPClient(ssh.get_transport())
-        scp.get(remote_path=self._file, local_path=self._local_path)
+        scp.get(remote_path=self._file_name, local_path=self._local_path)
         scp.close()
     
         vm_user = "%s@%s" % (self._user_name, self._ip2)
@@ -148,7 +147,7 @@ class router_discovery():
 
 
         # read pcap file and read packet fields
-        pcap_file = pyshark.FileCapture('~/rdisc/tests/results/agent_adv.pcap')
+        pcap_file = pyshark.FileCapture(self._file_path)
 
         try:
             for packet in pcap_file:
@@ -157,7 +156,7 @@ class router_discovery():
                 icmp_type = packet.layers[2].type
                 icmp_code = packet.layers[2].code
                 icmp_router_addr = packet.layers[2].router_address
-                print(icmp_code)
+                
                 if dst_addr == self._all_host_mcast_addr:
                     print("\nRouter sent router advertisement message to host on the all host multicast IP address %s as expected\n" % dst_addr)
                     state.append(True)
@@ -205,7 +204,7 @@ class router_discovery():
        
         vm_user = "%s@%s" % (self._user_name, self._ip1)
         try:
-            vm1_process = subprocess.Popen(['ssh','-tt', vm_user, "echo '%s' | sudo -S  ./rdisc/src/rdisc -r" % self._pwd],
+            vm1_process = subprocess.Popen(['ssh','-tt', vm_user, "echo '%s' | sudo -S ./rdisc/src/rdisc -r" % self._pwd],
                                     stdin=subprocess.PIPE, 
                                     stdout = subprocess.PIPE,
                                     universal_newlines=True,
