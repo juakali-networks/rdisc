@@ -42,8 +42,8 @@ docker build  -t rdisc_dst .
 
 # Open the containers in different terminals
 
-<pre>docker exec -it CONTAINER_ID1 rdisc_src sh</pre>
-<pre>docker exec -it CONTAINER_ID2 rdisc_dst sh</pre>
+<pre>docker exec -it <CONTAINER_ID1 rdisc_src> sh</pre>
+<pre>docker exec -it <CONTAINER_ID2 rdisc_dst> sh</pre>
 
 
 # Open the solicitor in one container
