@@ -35,15 +35,15 @@ docker build  -t rdisc_dst .
 # Create two containers and map them to the network.
 
 <pre>docker ps</pre>
-<pre>docker run -itd --network=rdisc-network rdisc sh</pre>
-<pre>docker run -itd --network=rdisc-network rdisc sh</pre>
+<pre>docker run -itd --network=rdisc-network rdisc_src sh</pre>
+<pre>docker run -itd --network=rdisc-network rdisc_dst sh</pre>
 
 
 
 # Open the containers in different terminals
 
-<pre>docker exec -it CONTAINER_ID1 rdisc sh</pre>
-<pre>docker exec -it CONTAINER_ID2 rdisc sh</pre>
+<pre>docker exec -it CONTAINER_ID1 sh</pre>
+<pre>docker exec -it CONTAINER_ID2 sh</pre>
 
 
 # Open the solicitor in one container
