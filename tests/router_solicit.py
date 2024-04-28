@@ -60,7 +60,7 @@ class router_solicit_test():
             print("Test Failed")
 
         
-        #  self.clean_up()
+        self.clean_up()
 
         return state
 

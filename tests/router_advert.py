@@ -52,7 +52,7 @@ class router_advert_test():
             print("Connecting to VM with IP %s failed with error %s" % (self._ip2, err))
             return False
     
-        time.sleep(10)
+        time.sleep(5)
 
 
         return True
