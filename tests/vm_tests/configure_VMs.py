@@ -60,8 +60,8 @@ class setup_vm():
 
         return True
 
-ip1 = "192.168.0.34"
-ip2 = "192.168.0.240"
+ip1 = "172.20.10.3"
+ip2 = "172.20.10.4"
 
 setup_vm().step_1(ip1)
 setup_vm().step_1(ip2)
