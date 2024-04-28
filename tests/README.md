@@ -5,9 +5,9 @@
 Two Virtual Machines (VMs)
 
 On Host PC, enable logging in without username by running the following commands for each VM
-<pre>gssh-keygen</pre>
-<pre>gssh-copy-id vm_username@vm_IP</pre>
-<pre>gssh-copy-id vm_username@vm_IP</pre>
+<pre>ssh-keygen</pre>
+<pre>ssh-copy-id vm_username@vm_IP</pre>
+<pre>ssh-copy-id vm_username@vm_IP</pre>
 
 on Host PC, install SCP
 <pre>cd /usr/local/lib/python3.8/dist-packages</pre>
