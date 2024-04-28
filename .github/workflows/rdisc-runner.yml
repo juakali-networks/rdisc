@@ -17,8 +17,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Configure Virtual Machines
       run: python3 tests/vm_tests/configure_VMs.py
-    #- name: Run router solicitation test
-    #  run: python3 tests/router_solicit.py
+    - name: Run router solicitation test
+      run: python3 tests/router_solicit.py
     - name: Run router advertisement test
       run: python3 tests/vm_tests/router_advert.py    
    
