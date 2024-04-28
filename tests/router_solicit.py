@@ -60,7 +60,7 @@ class router_solicit_test():
             print("Test Failed")
 
         
-        self.clean_up()
+        #  self.clean_up()
 
         return state
 
@@ -138,7 +138,6 @@ class router_solicit_test():
         print("Router solicitation message sent by host\n")
         
         vm_user = "%s@%s" % (self._user_name, self._ip2)
-    
         try:
             vm2_process = subprocess.Popen(['ssh','-tt', vm_user, "echo '%s' | sudo -S  ./rdisc/src/rdisc -s" % self._pwd],
                                    stdin=subprocess.PIPE, 
@@ -147,7 +146,6 @@ class router_solicit_test():
                                 bufsize=0)
             vm2_process.communicate()
             vm2_process.kill()
-        
         except Exception as err:
             print("Connecting to VM with IP %s failed with error %s" % (self._ip2, err))
             return False
@@ -168,7 +166,6 @@ class router_solicit_test():
                                 bufsize=0)
             vm1_process.communicate(timeout=40)
             vm1_process.kill()
-
         except Exception as err:
              print("Connecting to Virtual Machine with IP %s failed with error %s" % (self._ip1, err))
              return False
