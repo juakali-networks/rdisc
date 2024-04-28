@@ -10,8 +10,8 @@ from scp.scp import SCPClient
 
 
 # Virtual Machine IPs
-ip1 = "172.20.10.3"
-ip2 = "172.20.10.4"
+ip1 = "192.168.0.34"
+ip2 = "192.168.0.240"
 
 
 class setup_vm():
