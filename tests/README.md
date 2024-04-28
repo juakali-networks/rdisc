@@ -35,8 +35,8 @@ docker build  -t rdisc_dst .
 # Create two containers and map them to the network.
 
 <pre>docker ps</pre>
-<pre>docker run -itd --network=rdisc-network rdisc sh</pre>
-<pre>docker run -itd --network=rdisc-network rdisc sh</pre>
+<pre>docker run -itd --network=rdisc-network rdisc_src sh</pre>
+<pre>docker run -itd --network=rdisc-network rdisc_dst sh</pre>
 
 
 
