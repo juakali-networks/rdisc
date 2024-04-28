@@ -2,12 +2,29 @@
 # Test setup
 #
 
+Two Virtual Machines (VMs)
 
-Two Virtual Machines (VM).
+On Host PC, enable logging in without username by running the following commands for each VM
+<pre>gssh-keygen</pre>
+<pre>gssh-copy-id vm_username@vm_IP</pre>
+<pre>gssh-copy-id vm_username@vm_IP</pre>
+
+on Host PC, install SCP
+<pre>cd /usr/local/lib/python3.8/dist-packages</pre>
+<pre>sudo git clone https://github.com/jbardin/scp.py</pre>
+<pre>mv scp.py scp</pre>
+
 Install wireshark on your host PC
-Clone the rdisc repository <https://github.com/juakali-networks/rdisc/tree/master>
+Install pyshark on your host PC
 
-Navigate to the tests folder and run the VM configuration script
+
+
+Clone the rdisc repository 
+<pre>git clone https://github.com/juakali-networks/rdisc/tree/master></pre>
+
+Navigate to the tests folder and in the python files, adapt the IP addresses and VM usernames and Passwords to match your own
+
+Run the VM configuration script
 <pre>cd tests</pre>
 <pre>python3 configure_VMs.py</pre>
 
