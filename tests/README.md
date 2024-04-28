@@ -1,78 +1,39 @@
 # 
-# Prerequisites
+# Test setup
 #
 
+Two Virtual Machines (VMs)
 
-Docker is installed
- 
+On Host PC, enable logging in without username by running the following commands for each VM
+<pre>ssh-keygen</pre>
+<pre>ssh-copy-id vm_username@vm_IP</pre>
+<pre>ssh-copy-id vm_username@vm_IP</pre>
 
+on Host PC, install SCP
+<pre>cd /usr/local/lib/python3.8/dist-packages</pre>
+<pre>sudo git clone https://github.com/jbardin/scp.py</pre>
+<pre>mv scp.py scp</pre>
 
-
-
-
-
-
-# Building the docker Image
-<pre> 
-
-cd tests
-docker build  -t rdisc_src .
-docker build  -t rdisc_dst .
-</pre>
+Install wireshark on your host PC
+Install pyshark on your host PC
 
 
 
+Clone the rdisc repository 
+<pre>git clone https://github.com/juakali-networks/rdisc/tree/master></pre>
+
+Navigate to the tests folder and in the python files, adapt the IP addresses and VM usernames and Passwords to match your own
+
+Run the VM configuration script
+<pre>cd tests</pre>
+<pre>python3 configure_VMs.py</pre>
+
+Run the tests
+<pre>python3 router_solicit.py</pre>
+<pre>python3 router_advert.py</pre>
 
 
 
-
-
-# Create docker network
-
-<pre>docker network create -d bridge rdisc-network</pre>
-
-
-# Create two containers and map them to the network.
-
-<pre>docker ps</pre>
-<pre>docker run -itd --network=rdisc-network rdisc_src sh</pre>
-<pre>docker run -itd --network=rdisc-network rdisc_dst sh</pre>
-
-
-
-# Open the containers in different terminals
-
-<pre>docker exec -it CONTAINER_ID1 sh</pre>
-<pre>docker exec -it CONTAINER_ID2 sh</pre>
-
-
-# Open the solicitor in one container
-
-
-<pre>
-git clone https://github.com/juakali-networks/rdisc.git
-cd rdisc/src
-make
-</pre>
-
-
-# Open the route advertiser in the container
-
-
-<pre>
-git clone https://github.com/juakali-networks/rdisc.git
-cd rdisc/src
-make
-</pre>
-
-
-# In the solicitor
-<pre>sudo ./rdisc -s</pre>
-
-
-# In the advertiser
-
-<pre>sudo ./rdisc -r</pre>
 
 
 
