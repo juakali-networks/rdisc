@@ -3,7 +3,7 @@
 
 Two virtual machines (VMs).
 
-On Host PC, enable logging in without username by running the following commands for each VM.
+On Host PC, enable logging in without password by running the following commands for each VM.
 <pre>ssh-keygen</pre>
 <pre>ssh-copy-id vm_username@vm_IP</pre>
 <pre>ssh-copy-id vm_username@vm_IP</pre>
