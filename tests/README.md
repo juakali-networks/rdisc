@@ -1,6 +1,8 @@
-# 
+
+
 # Test setup
-#
+
+# Prerequisites
 
 Two Virtual Machines (VMs)
 
@@ -21,6 +23,8 @@ Install pyshark on your host PC
 
 Clone the rdisc repository 
 <pre>git clone https://github.com/juakali-networks/rdisc/tree/master></pre>
+
+# Run tests
 
 Navigate to the tests folder and in the python files, adapt the IP addresses and VM usernames and Passwords to match your own
 
