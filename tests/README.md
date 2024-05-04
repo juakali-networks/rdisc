@@ -11,6 +11,7 @@ On Host PC, enable logging in without password by running the following commands
 on Host PC, install SCP
 <pre>cd /usr/local/lib/python3.8/dist-packages</pre>
 <pre>sudo git clone https://github.com/jbardin/scp.py</pre>
+Rename the file from scp.py to scp
 <pre>mv scp.py scp</pre>
 
 Install wireshark on your host PC.
