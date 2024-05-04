@@ -50,6 +50,9 @@ On Linux PC 2. run
 
 <pre>sudo ./rdisc -r</pre>
 
+If you have any questions, comments or need any additional support, contact us on juakali.networks@gmail.com.
+
+
 
 
 
