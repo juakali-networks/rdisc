@@ -1,8 +1,5 @@
 
-
 # Test setup
-
-# Prerequisites
 
 Two Virtual Machines (VMs)
 
