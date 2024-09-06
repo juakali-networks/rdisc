@@ -1,4 +1,4 @@
-name: rdisc CI
+name: rdisc-ci
 
 on:
   push:
