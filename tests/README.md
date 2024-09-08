@@ -15,8 +15,11 @@ Rename the file from scp.py to scp
 <pre>mv scp.py scp</pre>
 
 Install wireshark on your host PC.
-Install pyshark on your host PC.
 
+Install pyshark and tshark on your host PC.
+
+<pre>pip3 install pyshark</pre>
+<pre>sudo apt install tshark</pre>
 
 
 Clone the rdisc repository. 
