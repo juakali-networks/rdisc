@@ -1,0 +1,51 @@
+https://askubuntu.com/questions/46930/how-can-i-set-up-password-less-ssh-login
+
+On host PC run the followig commands
+
+>>ssh-keygen
+>>ssh-copy-id vm_username@vm_IP
+ssh-copy-id lubuntu@172.20.10.5
+finished
+
+On host PC run the followig commands
+pip3 install --upgrade pip
+pip3 install pyshark
+sudo apt install tshark
+
+tshark
+
+python3.8 -m pip install pyshark
+
+pip3 install paramiko
+python3.8 -m pip install paramiko
+pip3 install scpclient
+python3.8 -m pip install scpclient
+
+
+cd /usr/local/lib/python3.8/dist-packages
+sudo git clone https://github.com/jbardin/scp.py
+mv scp.py scp
+
+
+
+self.__scp = Scp(host=self.__skywanidu_ip, port=int(self.__config.get(self.__device, "SSH_Port")),
+
+scp lubuntu@192.168.0.34:/home/lubuntu/mip/src/kkkk.pcap/home/dancer
+
+
+clear syslog
+truncate -s 0 /var/log/syslog
+
+
+# git repositories
+Install git
+
+sudo ip tunnel add gre1 mode gre remote 192.168.0.34 local 192.168.0.85 ttl 25
+
+sudo ip tunnel add gre1 mode gre remote 192.168.0.85 local 192.168.0.34 ttl 25
+ip addr add 10.0.0.1/30 dev gre1
+ip link set dev gre1 up
+
+https://bitlaunch.io/blog/what-is-a-gre-tunnel-and-how-to-set-one-up/
+
+
