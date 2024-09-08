@@ -39,6 +39,7 @@ class router_advert_test():
         print("Router solicitation message sent by host\n")
         
         vm_user = "%s@%s" % (self._user_name, self._ip2)
+
         try:
             vm2_process = subprocess.Popen(['ssh','-tt', vm_user, "echo '%s' | sudo -S  ./rdisc/src/rdisc -s" % self._pwd],
                                    stdin=subprocess.PIPE, 
