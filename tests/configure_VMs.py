@@ -11,7 +11,7 @@ from scp.scp import SCPClient
 
 # Virtual Machine IPs
 ip1 = "192.168.0.33"
-ip2 = "192.168.0.240"
+ip2 = "192.168.0.242"
 
 
 class setup_vm():

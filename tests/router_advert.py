@@ -19,7 +19,7 @@ class router_advert_test():
         self._user_name = "lubuntu"
 
         self._ip1 = "192.168.0.33"
-        self._ip2 = "192.168.0.240"
+        self._ip2 = "192.168.0.242"
         self._local_path = '/home/dancer/rdisc/tests/results'
         ### Settings #####
   
